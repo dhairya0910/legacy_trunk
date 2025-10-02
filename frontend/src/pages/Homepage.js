@@ -1,5 +1,3 @@
-import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
 import Navbar from '../Components/Navbar';
 import Hero from '../Components/Hero';
 import Features from '../Components/Features';
@@ -7,6 +5,7 @@ import HowItWorks from '../Components/HowItWorks';
 import About from '../Components/About';
 import Testimonials from '../Components/Testimonials';
 import CTABanner from '../Components/CTABanner';
+// import "../assets/styles/homepage.css"
 import Footer from '../Components/Footer';
 
 export default function Homepage() {

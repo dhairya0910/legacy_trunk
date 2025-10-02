@@ -138,7 +138,7 @@ export default function About() {
             animate={isVisible ? { opacity: 1, scale: 1 } : {}}
             transition={{ duration: 1, delay: 0.3 }}
           >
-            <div className="tree-illustration">🌳</div>
+            {/* <div className="tree-illustration">🌳</div> */}
           </motion.div>
         </div>
       </section>
