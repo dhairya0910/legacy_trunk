@@ -5,11 +5,17 @@ import HowItWorks from '../Components/HowItWorks';
 import About from '../Components/About';
 import Testimonials from '../Components/Testimonials';
 import CTABanner from '../Components/CTABanner';
-// import "../assets/styles/homepage.css"
+import { Helmet } from 'react-helmet';
 import Footer from '../Components/Footer';
 
 export default function Homepage() {
   return (
+    <>
+     <Helmet>
+            <title>Gharondha</title>
+            <meta name="description" content="Welcome to our website." />
+          </Helmet>
+          
     <div className="homepage">
       <style>{`
         * {
@@ -38,5 +44,7 @@ export default function Homepage() {
       <CTABanner />
       <Footer />
     </div>
+      </>
   );
+
 }

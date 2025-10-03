@@ -66,11 +66,11 @@ export default function Navbar() {
        
 
         <ul className="nav-links">
-          <li><a href ="/"className="nav-link" onClick={() => scrollToSection('hero')}>Home</a></li>
-          <li><a href ="/"className="nav-link" onClick={() => scrollToSection('features')}>Features</a></li>
-          <li><a href ="/"className="nav-link" onClick={() => scrollToSection('about')}>About</a></li>
-          <li><a href ="/"className="nav-link" onClick={() => scrollToSection('testimonials')}>Testimonials</a></li>
-          <li><a href ="/"className="nav-link" onClick={() => scrollToSection('contact')}>Contact</a></li>
+          <li className="nav-link" onClick={() => scrollToSection('hero')}>Home</li>
+          <li className="nav-link" onClick={() => scrollToSection('features')}>Features</li>
+          <li className="nav-link" onClick={() => scrollToSection('about')}>About</li>
+          <li className="nav-link" onClick={() => scrollToSection('testimonials')}>Testimonials</li>
+          <li className="nav-link" onClick={() => scrollToSection('contact')}>Contact</li>
         </ul>
 
           <img className='hamburger' src="https://e7.pngegg.com/pngimages/124/176/png-clipart-hamburger-button-computer-icons-menu-minimalist-menu-angle-text.png" alt="" />

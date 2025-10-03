@@ -14,7 +14,7 @@ export default function FamilyContactsSidebar({ members, onContactClick, isOpen,
 
       <motion.aside
         initial={{ x: -300 }}
-        animate={{ x: isOpen ? 0 : -300 }}
+        animate={{ x: isOpen ? 0 : -320 }}
         transition={{ type: "spring", damping: 25, stiffness: 200 }}
         className="fixed lg:relative inset-y-0 left-0 z-50 w-80 lg:w-full bg-white/80 backdrop-blur-xl border-r border-green-200/50 shadow-xl lg:shadow-none lg:translate-x-0"
       >
@@ -52,7 +52,7 @@ export default function FamilyContactsSidebar({ members, onContactClick, isOpen,
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50 cursor-pointer transition-all duration-200 group"
               >
                 <div className="relative">
-                  <div className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md">
+                  <div className="w-14 h-14 bg-gradient-to-tr from-[#544364] to-pink-100 shadow-[0_20px_50px_rgba(236,72,153,0.4)] rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md">
                     {member.avatar_url ? (
                       <img
                         src={member.avatar_url}

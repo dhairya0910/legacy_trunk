@@ -117,8 +117,8 @@ export default function Footer() {
         <div className="footer-content">
           <div className="footer-brand">
             <div className="footer-logo">
-              <span className="footer-logo-icon">🌳</span>
-              <span className="footer-logo-text">Kutumbakam</span>
+              {/* <span className="footer-logo-icon">🌳</span> */}
+              <span className="footer-logo-text">Gharondha</span>
             </div>
             <p className="footer-tagline">
               Preserving family legacies, one story at a time. Connect generations, cherish memories, and build your family's digital heritage.
@@ -163,7 +163,7 @@ export default function Footer() {
         </div>
 
         <div className="footer-bottom">
-          <p>© 2025 Kutumbakam. All rights reserved. Built with love for families worldwide.</p>
+          <p>© 2025 Gharondha. All rights reserved. Built with 💖 for families worldwide.</p>
         </div>
       </footer>
     </>

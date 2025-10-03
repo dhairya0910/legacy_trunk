@@ -218,7 +218,7 @@ export default function Hero() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.5 }}
           >
-            Preserve Your Family Legacy with Kutumbakam
+            Preserve Your Family Legacy with Gharondha
           </motion.h1>
           
           <motion.p 

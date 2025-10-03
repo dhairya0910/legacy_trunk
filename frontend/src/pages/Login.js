@@ -1,7 +1,8 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
+import { useState } from "react";
 import "../assets/styles/login.css"
-// import Navbar from '../Components/navbar'
+import config from "../config"
 // improt Link
 
 export default function Login() {
@@ -15,16 +16,50 @@ export default function Login() {
           
         }
       }, [])
+
+
+      
+  const [form, setForm] = useState(null);
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+  const handleSubmit = async (e) => {
+    // dispatch(showSpinner("flex"))
+    console.log(form)
+    e.preventDefault();
+    try {
+      const res = await fetch(`${config.APP_URL}/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials:"include",
+        body: JSON.stringify(form),
+      });
+      if (!res.ok) {
+        console.log("Login failed");
+     
+        throw new Error("Login failed");
+      } else {
+       
+      }
+      
+      
+    } catch (error) {
+     
+    }
+  };
+
       
   return (
     <>
     
 
-      <form className="container1">
+      <form className="container1" onSubmit={handleSubmit}>
         <div className="form">
-            <h3 className="tag">Login to <span className="title">GHAARONDHA</span></h3>
-        <input className="input" type="email" name="email" id="" placeholder="xyz@gmail.com" />
-        <input className="input" type="password" name="password" id="" placeholder="Password" />
+            <h3 className="tag">Login to <span className="title">GHARONDHA</span></h3>
+        <input className="input" onChange={handleChange} type="email" name="email" id="" placeholder="xyz@gmail.com" />
+        <input className="input" onChange={handleChange} type="password" name="password" id="" placeholder="Password" />
         <button className="btn-primary1" type="submit">Login</button>
         <p className="new">
           Don't have an account?{" "}

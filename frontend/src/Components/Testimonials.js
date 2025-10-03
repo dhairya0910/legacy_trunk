@@ -12,7 +12,7 @@ export default function Testimonials() {
       name: 'Priya Sharma',
       role: 'Daughter & Family Historian',
       image: '👩',
-      quote: 'Kutumbakam helped me capture my grandmother\'s stories before it was too late. Now my children will know their roots.',
+      quote: 'Gharondha helped me capture my grandmother\'s stories before it was too late. Now my children will know their roots.',
       rating: 5
     },
     {

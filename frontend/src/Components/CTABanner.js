@@ -48,7 +48,7 @@ export default function CTABanner() {
           left: -50%;
           width: 200%;
           height: 200%;
-          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+          background: radial-gradient(circle, rgba(255,255,255,0.1) 10%, transparent 70%);
           animation: rotate 20s linear infinite;
         }
 

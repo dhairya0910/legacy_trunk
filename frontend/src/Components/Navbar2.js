@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from "react";
 import { User, LogOut, UserCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
+import { useNavigate } from "react-router-dom";
 export default function Navbar2() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
+  const navigator = useNavigate();
 
   useEffect(() => {
     loadUser();
   }, []);
 
-  // ✅ Dummy User Data
+  //load dummy data
   const loadUser = async () => {
     try {
       const dummyUser = {
@@ -23,6 +24,10 @@ export default function Navbar2() {
       console.log("Failed to load user");
     }
   };
+  const viewStories = ()=>{
+    navigator("/view-stories")
+
+  }
 
   const handleLogout = async () => {
     // fake logout
@@ -91,7 +96,16 @@ export default function Navbar2() {
                       className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"
                     >
                       <User className="w-4 h-4 text-gray-600" />
-                      <span className="text-gray-700">View Profile</span>
+                      <span className="text-gray-700 block">View Profile</span><br />
+                 
+                    </button>
+                    <button
+                        onClick={viewStories}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"
+                    >
+                      <User className="w-4 h-4 text-gray-600" />
+                      <span className="text-gray-700 block">Your Stories</span><br />
+                 
                     </button>
 
                     <button

@@ -9,6 +9,7 @@ import TimelineCard from "../Components/TimelineCard";
 import ChatOverlay from "../Components/ChatOverlay";
 import UploadMemoryDialog from "../Components/UploadMemoryDialog";
 import UploadStoryDialog from "../Components/UploadStoryDialog";
+import { Helmet } from "react-helmet";
 
 const dummyMembers = [
   { id: 1, name: "Grandma Lakshmi", status: "Just returned from morning walk", last_seen: "2 minutes ago" },
@@ -75,13 +76,19 @@ export default function Dashboard() {
   }, [memories]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
+    <>
+     <Helmet>
+            <title>Dashboard</title>
+            <meta name="description" content="Welcome to the dashboard" />
+          </Helmet>
+
+    <div className="bg-gradient-to-tr from-indigo-50 via-pink-10 to-amber-50 min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
       <Navbar2 />
 
       <div className="flex">
         <button
           onClick={() => setIsSidebarOpen(true)}
-          className="lg:hidden fixed bottom-6 left-6 z-30 w-14 h-14 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform"
+          className="lg:hidden fixed bottom-6 left-6 z-30 w-14 h-14  bg-gradient-to-tr from-[#544364] to-pink-500 shadow-[0_20px_50px_rgba(236,72,153,0.4)] rounded-full shadow-2xl flex items-center justify-center hover:scale-110 transition-transform"
         >
           <Menu className="w-6 h-6 text-white" />
         </button>
@@ -111,7 +118,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="text-center mb-12"
             >
-              <h1 className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-emerald-600 via-green-600 to-teal-600 bg-clip-text text-transparent mb-4">
+              <h1 className="text-[3rem] font-extrabold leading-[2.2] mb-[1.1rem] bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-500 bg-clip-text text-transparent">
                 Family Timeline
               </h1>
               <p className="text-gray-600 text-lg">
@@ -223,5 +230,7 @@ export default function Dashboard() {
         familyMembers={members}
       />
     </div>
+        </>
+
   );
 }

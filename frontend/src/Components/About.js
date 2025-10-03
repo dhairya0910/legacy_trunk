@@ -120,12 +120,12 @@ export default function About() {
             animate={isVisible ? { opacity: 1, x: 0 } : {}}
             transition={{ duration: 0.8 }}
           >
-            <h2>Why Kutumbakam?</h2>
+            <h2>Why Gharondha?</h2>
             <p className="about-story">
               Imagine a circus family, like the Zanettis, traveling across continents. Each generation carries stories of triumph, struggle, and love. But with time, these precious memories fade.
             </p>
             <p className="about-story">
-              Kutumbakam was born from this need - to create a sacred digital space where families can preserve their unique journeys. Whether it's grandma's recipe, grandpa's war stories, or a child's first words, every moment deserves to be remembered.
+              Gharondha was born from this need - to create a sacred digital space where families can preserve their unique journeys. Whether it's grandma's recipe, grandpa's war stories, or a child's first words, every moment deserves to be remembered.
             </p>
             <div className="about-highlight">
               "Family isn't just about the present. It's about honoring the past and gifting the future with the stories that shaped us."
