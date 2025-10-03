@@ -2,41 +2,262 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>CRUD Demo with MongoDB</title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Social Feed</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
-<body class="bg-gray-100 flex justify-center items-center min-h-screen">
+<body class="bg-gray-100 min-h-screen">
 
-<div class="w-full max-w-md bg-white shadow-lg rounded-lg p-6">
-  <h1 class="text-2xl font-bold text-center mb-4">CRUD Demo (MongoDB)</h1>
+<div class="max-w-2xl mx-auto py-8 px-4">
 
-  <!-- CREATE -->
-  <form action="/add" method="POST" class="flex gap-2 mb-4">
-    <input type="text" name="item" placeholder="Enter item..." class="flex-grow border px-2 py-1 rounded" required />
-    <button type="submit" class="bg-blue-500 text-white px-4 py-1 rounded">Add</button>
-  </form>
+  <!-- CREATE POST CARD -->
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <form id="postForm" action="/add-media" method="POST" enctype="multipart/form-data">
+      <textarea name="item" placeholder="What's on your mind?" 
+                class="w-full border border-gray-300 rounded-lg p-4 resize-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500" 
+                rows="3"></textarea>
+      
+      <div class="flex items-center justify-between mt-4">
+        <div class="flex space-x-4">
+          <label class="flex items-center space-x-2 text-gray-600 cursor-pointer hover:text-blue-600">
+            <span class="material-icons">image</span>
+            <span id="photoText">Photo</span>
+            <input type="file" name="file" accept="image/*" class="hidden" id="photoInput">
+          </label>
+          <label class="flex items-center space-x-2 text-gray-600 cursor-pointer hover:text-blue-600">
+            <span class="material-icons">videocam</span>
+            <span id="videoText">Video</span>
+            <input type="file" name="file" accept="video/*" class="hidden" id="videoInput">
+          </label>
+        </div>
+        <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium">
+          Post
+        </button>
+      </div>
+    </form>
+  </div>
 
-  <!-- READ -->
-  <ul class="space-y-2">
-    <% items.forEach((item) => { %>
-      <li class="flex justify-between items-center bg-gray-50 px-3 py-2 rounded">
-        <span><%= item.name %></span>
-        <div class="flex gap-2">
-          <!-- UPDATE -->
-          <form action="/edit/<%= item._id %>" method="POST" class="flex gap-2">
-            <input type="text" name="newValue" placeholder="Edit..." class="border px-2 py-1 rounded"/>
-            <button type="submit" class="bg-green-500 text-white px-3 py-1 rounded">Save</button>
-          </form>
+  <!-- POSTS FEED -->
+  <div class="space-y-6">
+    <% items.forEach(item => { %>
+      <div class="bg-white rounded-lg shadow p-6">
+        
+        <!-- POST HEADER WITH THREE DOTS MENU -->
+        <div class="flex justify-between items-start mb-4">
+          <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center">
+              <span class="material-icons text-white">person</span>
+            </div>
+            <div>
+              <h3 class="font-semibold">You</h3>
+              <p class="text-gray-500 text-sm">
+                <%= new Date(item.createdAt).toLocaleDateString() %>
+              </p>
+            </div>
+          </div>
+          
+          <!-- THREE DOTS MENU -->
+          <div class="relative">
+            <button class="three-dots-btn text-gray-500 hover:text-gray-700 p-2 rounded-full hover:bg-gray-100">
+              <span class="material-icons">more_vert</span>
+            </button>
+            <div class="three-dots-menu absolute right-0 top-10 bg-white shadow-lg rounded-lg py-2 z-10 hidden w-32">
+              <button class="edit-post-btn w-full text-left px-4 py-2 hover:bg-gray-100 text-blue-600" 
+                      data-id="<%= item._id %>" data-text="<%= item.text || '' %>">
+                Edit Post
+              </button>
+              <form action="/delete/<%= item._id %>" method="POST" class="w-full">
+                <button type="submit" class="w-full text-left px-4 py-2 hover:bg-gray-100 text-red-600">
+                  Delete Post
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
 
-          <!-- DELETE -->
-          <form action="/delete/<%= item._id %>" method="POST">
-            <button type="submit" class="bg-red-500 text-white px-3 py-1 rounded">Delete</button>
+        <!-- POST CONTENT -->
+        <% if (item.text) { %>
+          <p class="text-gray-800 mb-4 whitespace-pre-wrap"><%= item.text %></p>
+        <% } %>
+
+        <!-- MEDIA -->
+        <% if (item.media) { %>
+          <div class="mb-4 rounded-lg overflow-hidden border">
+            <% if (item.mediaType === 'video') { %>
+              <video controls class="w-full max-h-96 object-contain bg-black">
+                <source src="<%= item.media %>" type="video/mp4">
+                Your browser does not support the video tag.
+              </video>
+            <% } else { %>
+              <img src="<%= item.media %>" class="w-full max-h-96 object-contain">
+            <% } %>
+          </div>
+        <% } %>
+
+        <!-- EDIT FORM (HIDDEN BY DEFAULT) -->
+        <div id="edit-form-<%= item._id %>" class="hidden mt-4 p-4 bg-gray-50 rounded-lg">
+          <form action="/edit/<%= item._id %>" method="POST" class="space-y-3">
+            <textarea name="newText" class="w-full border border-gray-300 rounded-lg p-3 resize-none focus:ring-2 focus:ring-blue-500" 
+                      rows="3"><%= item.text || '' %></textarea>
+            <div class="flex space-x-2">
+              <button type="submit" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg">
+                Save
+              </button>
+              <button type="button" class="cancel-edit bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg" 
+                      data-id="<%= item._id %>">
+                Cancel
+              </button>
+            </div>
           </form>
         </div>
-      </li>
+
+        <!-- COMMENTS SECTION -->
+        <div class="mt-6">
+          <!-- EXISTING COMMENTS -->
+          <% if (item.comments && item.comments.length > 0) { %>
+            <div class="space-y-3 mb-4">
+              <% item.comments.forEach(comment => { %>
+                <div class="flex items-start space-x-3 bg-gray-50 p-3 rounded-lg">
+                  <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span class="material-icons text-white text-sm">person</span>
+                  </div>
+                  <div class="flex-1">
+                    <div class="flex justify-between items-start">
+                      <div>
+                        <span class="font-medium text-sm">You</span>
+                        <p class="text-gray-700 text-sm mt-1"><%= comment.text %></p>
+                      </div>
+                      <form action="/delete-comment/<%= item._id %>/<%= comment._id %>" method="POST">
+                        <button type="submit" class="text-red-500 hover:text-red-700 text-sm">
+                          Delete
+                        </button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              <% }) %>
+            </div>
+          <% } %>
+
+          <!-- ADD COMMENT FORM -->
+          <form action="/comment/<%= item._id %>" method="POST" class="flex space-x-2">
+            <input type="text" name="commentText" placeholder="Write a comment..." 
+                   class="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" required>
+            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-full">
+              <span class="material-icons text-sm">send</span>
+            </button>
+          </form>
+        </div>
+      </div>
     <% }) %>
-  </ul>
+
+    <% if (items.length === 0) { %>
+      <div class="bg-white rounded-lg shadow p-12 text-center">
+        <span class="material-icons text-gray-400 text-6xl mb-4">article</span>
+        <h3 class="text-xl font-semibold text-gray-900 mb-2">No posts yet</h3>
+        <p class="text-gray-600">Create your first post above!</p>
+      </div>
+    <% } %>
+  </div>
 </div>
 
+<script>
+  // Three dots menu functionality
+  document.querySelectorAll('.three-dots-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const menu = this.nextElementSibling;
+      
+      // Close all other menus
+      document.querySelectorAll('.three-dots-menu').forEach(otherMenu => {
+        if (otherMenu !== menu) {
+          otherMenu.classList.add('hidden');
+        }
+      });
+      
+      // Toggle current menu
+      menu.classList.toggle('hidden');
+    });
+  });
+
+  // Close menus when clicking outside
+  document.addEventListener('click', function() {
+    document.querySelectorAll('.three-dots-menu').forEach(menu => {
+      menu.classList.add('hidden');
+    });
+  });
+
+  // Edit post functionality
+  document.querySelectorAll('.edit-post-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const postId = this.getAttribute('data-id');
+      const editForm = document.getElementById(`edit-form-${postId}`);
+      
+      // Close all other edit forms
+      document.querySelectorAll('[id^="edit-form-"]').forEach(form => {
+        if (form.id !== `edit-form-${postId}`) {
+          form.classList.add('hidden');
+        }
+      });
+      
+      // Show current edit form
+      editForm.classList.remove('hidden');
+      
+      // Close three dots menu
+      this.closest('.three-dots-menu').classList.add('hidden');
+    });
+  });
+
+  // Cancel edit functionality
+  document.querySelectorAll('.cancel-edit').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const postId = this.getAttribute('data-id');
+      const editForm = document.getElementById(`edit-form-${postId}`);
+      editForm.classList.add('hidden');
+    });
+  });
+
+  // File input display
+  document.getElementById('photoInput').addEventListener('change', function() {
+    const fileName = this.files[0]?.name || 'Photo';
+    document.getElementById('photoText').textContent = fileName;
+  });
+
+  document.getElementById('videoInput').addEventListener('change', function() {
+    const fileName = this.files[0]?.name || 'Video';
+    document.getElementById('videoText').textContent = fileName;
+  });
+
+  // Only allow one file to be selected
+  document.getElementById('photoInput').addEventListener('change', function() {
+    document.getElementById('videoInput').value = '';
+    document.getElementById('videoText').textContent = 'Video';
+  });
+
+  document.getElementById('videoInput').addEventListener('change', function() {
+    document.getElementById('photoInput').value = '';
+    document.getElementById('photoText').textContent = 'Photo';
+  });
+
+  // Form validation
+  document.getElementById('postForm').addEventListener('submit', function(e) {
+    const textarea = this.querySelector('textarea[name="item"]');
+    const fileInputs = this.querySelectorAll('input[type="file"]');
+    let hasFile = false;
+    
+    fileInputs.forEach(input => {
+      if (input.files.length > 0) {
+        hasFile = true;
+      }
+    });
+
+    if (!textarea.value.trim() && !hasFile) {
+      e.preventDefault();
+      alert('Please enter some text or select a file to post.');
+      textarea.focus();
+    }
+  });
+</script>
 </body>
 </html>

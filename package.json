@@ -12,8 +12,13 @@
   "description": "",
   "dependencies": {
     "body-parser": "^2.2.0",
+    "cloudinary": "^1.41.3",
     "ejs": "^3.1.10",
     "express": "^5.1.0",
-    "mongoose": "^8.18.3"
+    "global-agent": "^3.0.0",
+    "https-proxy-agent": "^7.0.6",
+    "mongoose": "^8.18.3",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0"
   }
 }
