@@ -8,7 +8,7 @@ const proxyAgent = new HttpsProxyAgent('http://edcguest:edcguest@172.31.100.25:3
 cloudinary.config({
   cloud_name:"daoen1kny",
   api_key: "668582844597566",
-  api_secret: "odhIeRDiAmJ_2ICtr3xM1pOPrI4"
+  api_secret: "SECRET_Key"
 });
 
 // Multer-Cloudinary storage with proper video support
