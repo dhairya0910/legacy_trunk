@@ -1,8 +1,9 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import "../assets/styles/login.css"
+import styles from "../assets/styles/login.module.css"
 import config from "../config"
+import google from "../assets/Images/google.svg"
 // improt Link
 
 export default function Login() {
@@ -58,9 +59,12 @@ export default function Login() {
       <form className="container1" onSubmit={handleSubmit}>
         <div className="form">
             <h3 className="tag">Login to <span className="title">GHARONDHA</span></h3>
-        <input className="input" onChange={handleChange} type="email" name="email" id="" placeholder="xyz@gmail.com" />
-        <input className="input" onChange={handleChange} type="password" name="password" id="" placeholder="Password" />
-        <button className="btn-primary1" type="submit">Login</button>
+            <div className="flex justify-evenly gap-3 my-4">
+
+            <div><img src={google} alt="" srcset="" className="h-10 rounded-3xl w-10" id="google" /></div>
+            <div><img src={google} alt="" srcset="" className="h-10 rounded-3xl w-10" id="instagram" /></div>
+            <div><img src={google} alt="" srcset="" className="h-10 rounded-3xl w-10" id="facebook" /></div>
+            </div>
         <p className="new">
           Don't have an account?{" "}
           <Link to="/signup" style={{ color: "#78dbff" }}>

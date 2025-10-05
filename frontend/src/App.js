@@ -7,6 +7,8 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Stories from './Components/Stories'
 import { Helmet } from 'react-helmet';
+import FamilySelection from './Components/FamilySelection';
+import YourPosts from './pages/YourPosts';
 
 function App() {
   return <>
@@ -19,6 +21,9 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/view-stories" element={<Stories/>} />
+        <Route path="/family-select" element={<FamilySelection/>} />
+        <Route path="/posts" element={<YourPosts/>} />
+
       </Routes>
     </Router>
   </>
