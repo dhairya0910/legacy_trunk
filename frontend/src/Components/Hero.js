@@ -175,7 +175,7 @@ export default function Hero() {
         </motion.div>
 
         {/* Optional floating icon */}
-        {/* <div className="floating-illustration">🌳</div> */}
+        {/* <div className="floating-illustration"></div> */}
       </section>
     </>
   );

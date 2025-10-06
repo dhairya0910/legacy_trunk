@@ -1,39 +1,12 @@
-
-import React, { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import React from "react";
+import { motion } from "framer-motion";
 
 export default function HowItWorks() {
-  const [isVisible, setIsVisible] = useState(false);
-  const sectionRef = useRef(null);
-
-  useEffect(() => {
-    const currentSection = sectionRef.current; // Store current ref value
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-        }
-      },
-      { threshold: 0.1 }
-    );
-
-    if (currentSection) {
-      observer.observe(currentSection);
-    }
-
-    return () => {
-      // Use the stored value for cleanup
-      if (currentSection) {
-        observer.unobserve(currentSection);
-      }
-    };
-  }, []);
-
   const steps = [
-    { icon: '📤', title: 'Upload Stories', desc: 'Share your memories through text, photos, audio or video' },
-    { icon: '🏷️', title: 'Tag & Organize', desc: 'Categorize and connect memories with family members' },
-    { icon: '👨‍👩‍👧‍👦', title: 'Share in Circles', desc: 'Create private family groups to share your legacy' },
-    { icon: '💎', title: 'Preserve Forever', desc: 'Export to PDF, match generations with AI' }
+    { icon: "📤", title: "Upload Stories", desc: "Share your memories through text, photos, audio or video" },
+    { icon: "🏷️", title: "Tag & Organize", desc: "Categorize and connect memories with family members" },
+    { icon: "👨‍👩‍👧‍👦", title: "Share in Circles", desc: "Create private family groups to share your legacy" },
+    { icon: "💎", title: "Preserve Forever", desc: "Export to PDF, match generations with AI" }
   ];
 
   return (
@@ -169,21 +142,24 @@ export default function HowItWorks() {
         }
       `}</style>
 
-      <section id="how-it-works" className="how-section" ref={sectionRef}>
+      <section id="how-it-works" className="how-section">
         <div className="how-header">
-          <motion.h2 
+          <motion.h2
             className="how-title"
             initial={{ opacity: 0, y: 30 }}
-            animate={isVisible ? { opacity: 1, y: 0 } : {}}
+            whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
+            viewport={{ once: true, amount: 0.3 }}
           >
             How It Works
           </motion.h2>
-          <motion.p 
+
+          <motion.p
             className="how-subtitle"
             initial={{ opacity: 0 }}
-            animate={isVisible ? { opacity: 1 } : {}}
+            whileInView={{ opacity: 1 }}
             transition={{ duration: 0.8, delay: 0.2 }}
+            viewport={{ once: true, amount: 0.3 }}
           >
             Four simple steps to preserve your family's legacy
           </motion.p>
@@ -191,12 +167,13 @@ export default function HowItWorks() {
 
         <div className="steps-container">
           {steps.map((step, index) => (
-            <motion.div 
+            <motion.div
               key={index}
               className="step-card"
               initial={{ opacity: 0, y: 50 }}
-              animate={isVisible ? { opacity: 1, y: 0 } : {}}
+              whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.3 + index * 0.15 }}
+              viewport={{ once: true, amount: 0.2 }}
             >
               <div className="step-number">{index + 1}</div>
               <span className="step-icon">{step.icon}</span>
