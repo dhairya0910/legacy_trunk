@@ -167,7 +167,7 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
           {/* File Upload */}
           <div className="space-y-2">
             <label className="text-sm font-medium text-gray-900">
-              Attachment (optional)
+              Attachment
             </label>
 
             {!formData.file_url ? (

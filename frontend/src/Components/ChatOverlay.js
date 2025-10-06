@@ -51,7 +51,7 @@ export default function ChatOverlay({ member, isOpen, onClose }) {
                   </div>
                   <div>
                     <h3 className="font-bold text-gray-800">{member?.name}</h3>
-                    <p className="text-xs text-gray-500">Online</p>
+                   
                   </div>
                 </div>
                 

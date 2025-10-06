@@ -28,6 +28,10 @@ export default function Navbar2() {
     navigator("/view-stories")
 
   }
+  const viewPosts = ()=>{
+    navigator("/posts")
+
+  }
 
   const handleLogout = async () => {
     // fake logout
@@ -105,6 +109,14 @@ export default function Navbar2() {
                     >
                       <User className="w-4 h-4 text-gray-600" />
                       <span className="text-gray-700 block">Your Stories</span><br />
+                 
+                    </button>
+                    <button
+                        onClick={viewPosts}
+                      className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"
+                    >
+                      <User className="w-4 h-4 text-gray-600" />
+                      <span className="text-gray-700 block">Your Posts</span><br />
                  
                     </button>
 

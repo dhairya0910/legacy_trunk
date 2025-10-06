@@ -70,7 +70,7 @@ export default function YourPosts() {
             <div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent flex items-center gap-3">
                 <Sparkles className="w-8 h-8 text-indigo-600" />
-                Timeline
+                Your Posts
               </h1>
               <p className="text-gray-600 mt-2">
                 Your journey, one post at a time
