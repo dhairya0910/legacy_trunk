@@ -9,7 +9,6 @@ export default function FamilySelection() {
   const [familyKey, setFamilyKey] = useState("");
   const [familyName, setFamilyName] = useState("");
   const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
   const [generatedKey, setGeneratedKey] = useState("");
 
   const generateFamilyKey = () => {
@@ -42,11 +41,9 @@ export default function FamilySelection() {
       <div className="w-full max-w-4xl">
         {/* Header */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-purple-500 to-blue-600 rounded-3xl mb-6 shadow-xl">
-            <Users className="w-10 h-10 text-white" />
-          </div>
+        
           <h1 className="text-5xl font-bold text-white mb-4">
-            Welcome to Family Hub
+            Welcome 
           </h1>
           <p className="text-lg text-gray-200">
             Join your family or create a new one to get started.
@@ -119,13 +116,7 @@ export default function FamilySelection() {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                 />
-                 <input
-                  className="w-full border rounded-lg p-3"
-                  placeholder="Enter Family password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+           
                 <button
                   type="submit"
                   className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
@@ -166,14 +157,7 @@ export default function FamilySelection() {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                 />
-                <input
-                  type="password"
-                  className="w-full border rounded-lg p-3"
-                  placeholder="Family Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
+            
                 <div className="flex items-center justify-between border rounded-lg p-3 bg-purple-50">
                   <span className="font-mono text-purple-700 font-bold">
                     {generatedKey}

@@ -26,7 +26,7 @@ export default function FamilyContactsSidebar({ members, onContactClick, isOpen,
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-800">Family</h2>
+                  <h2 className="font-bold text-gray-800">Family_Name</h2>
                   <p className="text-sm text-gray-500">{members.length} members</p>
                 </div>
               </div>

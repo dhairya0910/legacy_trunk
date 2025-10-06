@@ -1,9 +1,11 @@
 import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import styles from "../assets/styles/login.module.css"
+import  "../assets/styles/login.css"
 import config from "../config"
 import google from "../assets/Images/google.svg"
+import insta from "../assets/Images/insta.svg"
+import fb from "../assets/Images/fb.svg"
 // improt Link
 
 export default function Login() {
@@ -59,11 +61,11 @@ export default function Login() {
       <form className="container1" onSubmit={handleSubmit}>
         <div className="form">
             <h3 className="tag">Login to <span className="title">GHARONDHA</span></h3>
-            <div className="flex justify-evenly gap-3 my-4">
+            <div className="flex justify-evenly gap-6 my-7">
 
             <div><img src={google} alt="" srcset="" className="h-10 rounded-3xl w-10" id="google" /></div>
-            <div><img src={google} alt="" srcset="" className="h-10 rounded-3xl w-10" id="instagram" /></div>
-            <div><img src={google} alt="" srcset="" className="h-10 rounded-3xl w-10" id="facebook" /></div>
+            <div><img src={insta} alt="" srcset="" className="h-10 rounded-3xl w-10" id="instagram" /></div>
+            <div><img src={fb} alt="" srcset="" className="h-10 rounded-3xl w-10" id="facebook" /></div>
             </div>
         <p className="new">
           Don't have an account?{" "}
