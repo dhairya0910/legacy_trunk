@@ -9,12 +9,22 @@ const User=require('./models/userModel')
 const Family=require('./models/familyModel')
 const sendMail = require("./config/mailer");
 const crypto = require("crypto");
-
+const cookieParser = require("cookie-parser");
+const cors = require("cors");
 const app = express();
+
+
+//middlewares
 app.set('view engine','ejs')
 app.set('views',path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true}));
 mongoose.connect("mongodb://127.0.0.1:27017/legacy_trunk");
+app.use(express.json());
+app.use(cookieParser());
+app.use(cors({
+  origin: "http://localhost:3000", // your frontend URL
+  credentials: true, // allow session cookie from browser to pass through
+}));
 
 app.use(session({
   secret: "secret_key",
@@ -51,6 +61,12 @@ app.get(
     try {
       const userId = req.user._id;
       const user = await User.findById(userId);
+      res.cookie("authToken", req.user._id, {
+    httpOnly: true, // cannot be accessed by JS
+    secure: false, // true if using HTTPS
+    sameSite: "lax",
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
+  });
 
       // 1️⃣ Check for pending invite matching user's Google email
       const pendingFamily = await Family.findOne({
@@ -77,11 +93,11 @@ app.get(
 
       // 2️⃣ Continue your existing redirect logic
       if (!user.username || !user.age) {
-        return res.redirect("/complete-profile");
+        return res.redirect("http://localhost:3000/profile");
       } else if (!user.family_id) {
-        return res.redirect('/join-family');
+        return res.redirect('http://localhost:3000/family-select');
       } else {
-        return res.redirect('/');
+        return res.redirect('http://localhost:3000/dashboard');
       }
 
     } catch (err) {
@@ -98,7 +114,7 @@ app.get(
 
 
 
-app.get("/", isLoggedIn, async (req, res) => {
+app.post("/", isLoggedIn, async (req, res) => {
   try {
     const userId = req.user._id;
 
@@ -106,7 +122,7 @@ app.get("/", isLoggedIn, async (req, res) => {
 
     const isAdmin = adminFamilies.length > 0;
 
-    res.render("home.ejs", {
+    res.json({
       username: req.user.username,
       isAdmin,
       adminFamilies 
@@ -122,18 +138,20 @@ app.get('/signup',(req,res)=>{
     res.render("signup")
 })
 
-app.get ('/complete-profile',isLoggedIn,(req,res)=>{
-  res.render('completeProfile.ejs');
-})
+// app.get ('/complete-profile',isLoggedIn,(req,res)=>{
+//   res.render('completeProfile.ejs');
+// })
 
 app.post('/complete-profile', isLoggedIn, async (req, res) => {
   try {
+
     const { username, age } = req.body;
     const userId = req.user._id;
 
     // 1. Check if the user exists
     if (!userId) {
-      return res.redirect('/signup');
+      // return res.redirect('http://localhost:3000/family-select');
+      return res.json({"route":'/family-select'});
     }
 
     // 2. Check if username is already taken by another user
@@ -141,7 +159,7 @@ app.post('/complete-profile', isLoggedIn, async (req, res) => {
     if (existingUser && existingUser._id.toString() !== userId.toString()) {
       // If username is used by someone else, show alert
       
-      return res.render("completeProfile.ejs", { 
+      return res.json({ 
         error: "Username already taken, please choose another." 
       });
     }
@@ -154,13 +172,14 @@ app.post('/complete-profile', isLoggedIn, async (req, res) => {
     );
 
     if (!updatedUser) {
-      return res.redirect('/signup');
+      return res.json({"route":'/signup'});
+      // return res.redirect('http://localhost:3000');
     }
 
-    res.redirect('/join-family');
+    res.json({"route":'/family-select'});
   } catch (err) {
     console.error(err);
-    res.send('Error in connecting, we will get back to you.');
+    res.json({"msg":'Error in connecting, we will get back to you.'});
   }
 });
 

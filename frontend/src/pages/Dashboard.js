@@ -51,7 +51,7 @@ useEffect(() => {
       try {
         const res = await fetch(`http://localhost:3128/`, {
           method: "POST",
-          credentials: "include", // ✅ send cookies
+          credentials: "include", // send cookies
           headers: {
             "Content-Type": "application/json",
           },
