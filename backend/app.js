@@ -192,6 +192,131 @@ app.post("/create-family", isLoggedIn, async (req, res) => {
   } 
 });  
 
+
+app.post("/join-family/invite", isLoggedIn, async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findById(req.user._id);
+    const familyId = user.family_id;
+    console.log(email)
+    const family = await Family.findById(familyId);
+    
+    if (!family) return res.status(404).send("Family not found");
+    if (family.admin.toString() !== req.user._id.toString())
+      return res.status(403).send("Not authorized");
+
+    // 1. Generate a unique token for the invitation link
+    const token = crypto.randomBytes(20).toString("hex");
+    
+
+    // 2. Save the invite in family.invites
+    family.invites.push({ email, token });
+    await family.save();
+   
+
+    // 3. Send invitation email
+    // const inviteLink = `http://localhost:3128/join-family/${familyId}/invite/${token}`;
+    await sendMail(
+      email,
+      "You're invited to join a family 🎉",
+      `<p>Hi there,</p>
+       <p>You have been invited to join the family <b>${family.family_name}</b>.</p>
+       <p>Click <a href="${12}">here</a> to sign in and join automatically!</p>`
+    );
+ 
+    console.log("Invitation sent successfully!");
+    res.json({msg:"succesfully"})
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server error");
+  }
+});
+
+
+//Sending a joining request
+// Send join request
+app.post("/join-family/send-request", isLoggedIn, async (req, res) => {
+  try {
+    // Extract logged-in user ID
+    const userId = req.user._id;
+    console.log("User ID:", userId);
+
+    // Extract family details from request
+    const { family_id, family_username } = req.body;
+    console.log("Family Request Body:", req.body);
+
+    // Find admin user by email
+    const admin = await User.findOne({ email: family_username });
+    console.log("Admin Found:", admin ? admin.email : "Not Found");
+
+    // Fetch logged-in user data
+    const user = await User.findById(userId);
+    if (!user) {
+      console.log("User not found in database");
+      return res.status(404).json({ message: "User not found" });
+    }
+    console.log("User Data:", user.username);
+
+    // Find target family using family ID or admin reference
+    const family = await Family.findOne({
+      $or: [
+        { family_id: family_id?.trim() },
+        { admin: admin?._id?.toString() }
+      ]
+    }).populate("admin");
+
+    if (!family) {
+      console.log("Family not found");
+      return res.status(404).json({ message: "Family not found" });
+    }
+    console.log("Family Found:", family.family_name);
+
+    // Prevent duplicate membership
+    if (family.members.some(m => m.toString() === userId.toString())) {
+      console.log("User already a member of this family");
+      return res.status(400).json({ message: "You are already a member" });
+    }
+
+    // Prevent duplicate pending requests
+    const existingRequest = family.joinRequests.find(
+      r => r.userId.toString() === userId.toString() && r.status === "pending"
+    );
+    if (existingRequest) {
+      console.log("Pending join request already exists");
+      return res.status(400).json({ message: "You already have a pending request" });
+    }
+
+    // Add new join request
+    family.joinRequests.push({ userId, status: "pending" });
+    await family.save();
+    console.log("Join request added successfully");
+
+    // Send email to admin notifying new request
+    try {
+      await sendMail(
+        family.admin.email,
+        "New Family Join Request 🚀",
+        `
+          <p>Hi ${family.admin.username},</p>
+          <p><b>${user.username}</b> has requested to join your family <b>${family.family_name}</b>.</p>
+          <p>Visit your dashboard to review the request.</p>
+        `
+      );
+      console.log("Email sent successfully to admin");
+    } catch (emailErr) {
+      console.log("Email sending failed:", emailErr.message);
+    }
+
+    // Successful response
+    console.log("Join request process completed successfully");
+    return res.status(200).json({ message: "Join request sent successfully" });
+
+  } catch (err) {
+    console.log("Server error during join request:", err.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+});
+
 // Logout route to destroy session and clear cookies
 app.get("/logout", (req, res) => { 
   req.session.destroy((err) => { 
@@ -199,57 +324,18 @@ app.get("/logout", (req, res) => {
     res.clearCookie("connect.sid"); 
     res.redirect("/signup"); 
   }); 
-});  
-
-
-//Sending a joining request
-// Send join request
-app.post("/join-family/:id/send-request", async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const familyId = req.params.id; // this is the MongoDB ObjectId
-
-    // Find family by MongoDB _id
-    const family = await Family.findById(familyId).populate("admin");
-    const user=await User.findById(userId);
-    if (!family || !user) {
-      return res.status(404).send("Family or user not found");
-    }
-    // Already a member?
-    if (family.members.some(m => m.toString() === userId.toString())) {
-      return res.status(400).send("You are already a member");
-    }
-
-    // Already requested?
-    if (family.joinRequests.some(r => r.userId.toString() === userId.toString() && r.status === "pending")) {
-      return res.status(400).send("You already have a pending request");
-    }
-
-    // Add request
-    family.joinRequests.push({ userId });
-    await family.save();
-    //Sending mail to admin
-   try {
-  await sendMail(
-    family.admin.email,
-    "New Family Join Request Received 🚀",
-    `
-      <p>Hi ${family.admin.username},</p>
-      <p><b>${user.username}</b> has requested to join your family <b>${family.family_name}</b>.</p>
-      <p>Login to your dashboard to <a href="localhost:3128/join-family/${familyId}/requests">approve or reject</a> the request.</p>
-    `
-  );
-  console.log("📧 Email function executed successfully");
-} catch (emailErr) {
-  console.error("❌ Email sending failed:", emailErr);
-}
-
-    res.redirect("/join-family");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
 });
+
+
+
+
+
+
+
+
+
+
+
 
 //Inviting a member to a family
 
@@ -285,40 +371,7 @@ app.get("/join-family/:familyId/invite/:token", async (req, res) => {
 });
 
 
-app.post("/join-family/:familyId/invite", isLoggedIn, async (req, res) => {
-  try {
-    const { email } = req.body;
-    const { familyId } = req.params;
 
-    const family = await Family.findById(familyId);
-    if (!family) return res.status(404).send("Family not found");
-
-    if (family.admin.toString() !== req.user._id.toString())
-      return res.status(403).send("Not authorized");
-
-    // 1. Generate a unique token for the invitation link
-    const token = crypto.randomBytes(20).toString("hex");
-
-    // 2. Save the invite in family.invites
-    family.invites.push({ email, token });
-    await family.save();
-
-    // 3. Send invitation email
-    const inviteLink = `http://localhost:3128/join-family/${familyId}/invite/${token}`;
-    await sendMail(
-      email,
-      "You're invited to join a family 🎉",
-      `<p>Hi there,</p>
-       <p>You have been invited to join the family <b>${family.family_name}</b>.</p>
-       <p>Click <a href="${inviteLink}">here</a> to sign in and join automatically!</p>`
-    );
-
-    res.send("Invitation sent successfully!");
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
 
 
 

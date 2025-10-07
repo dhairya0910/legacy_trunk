@@ -37,7 +37,7 @@ export default function FamilySelection() {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/family/join", {
+      const res = await fetch(`${config.BACKEND_URL}/join-family/send-request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ family_id, family_username }),
@@ -50,6 +50,8 @@ export default function FamilySelection() {
         setShowJoinDialog(false);
         setfamily_id("");
         setfamily_username("");
+        alert(` ${data.message || "Unable to join family"}`);
+
       } else {
         alert(` ${data.message || "Unable to join family"}`);
       }
@@ -161,15 +163,15 @@ export default function FamilySelection() {
                   placeholder="Enter Family Key"
                   value={family_id}
                   onChange={(e) => setfamily_id(e.target.value)}
-                  required
+                  
                 />
                 <div className="or w-full text-center p-4 text-gray-600 font-bold">OR</div>
                 <input
                   className="w-full border rounded-lg p-3"
-                  placeholder="Enter Family family_username"
+                  placeholder="Enter admin account"
                   value={family_username}
                   onChange={(e) => setfamily_username(e.target.value)}
-                  required
+                  
                 />
                 <button
                   type="submit"

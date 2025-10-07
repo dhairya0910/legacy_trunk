@@ -11,6 +11,7 @@ import FamilySelection from './Components/FamilySelection';
 import YourPosts from './pages/YourPosts';
 import Profile from './pages/Profile';
 import Socket from './api/Socket';
+import InviteMember from './pages/InviteMember';
 
 function App() {
   return <>
@@ -27,6 +28,7 @@ function App() {
         <Route path="/posts" element={<YourPosts/>} />
         <Route path="/socket" element={<Socket/>} />
         <Route path="/profile" element={<Profile/>} />
+        <Route path="/invite" element={<InviteMember/>} />
 
       </Routes>
     </Router>
