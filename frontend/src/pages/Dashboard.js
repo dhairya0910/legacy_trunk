@@ -38,6 +38,7 @@ export default function Dashboard() {
   const [visibleCards, setVisibleCards] = useState(new Set());
   const observerRefs = useRef([]);
   const [user, setUser] = useState(null);
+  const [familyName,setFamilyName] = useState("");
 
 
 
@@ -59,6 +60,7 @@ useEffect(() => {
 
         const data = await res.json();
         console.log("Verification response:", data);
+        setFamilyName(data.family_name);
 
         if (data.ok) {
           // You got your auth token and user details!
@@ -144,6 +146,7 @@ useEffect(() => {
             onContactClick={handleContactClick}
             isOpen={true}
             onClose={() => {}}
+            familyName={familyName}
           />
         </div>
 
@@ -153,6 +156,7 @@ useEffect(() => {
             onContactClick={handleContactClick}
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
+            familyName={familyName}
           />
         </div>
 

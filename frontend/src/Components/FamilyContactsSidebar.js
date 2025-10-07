@@ -2,7 +2,7 @@ import React from "react";
 import { motion } from "framer-motion";
 import { Users, MessageCircle, X } from "lucide-react";
 
-export default function FamilyContactsSidebar({ members, onContactClick, isOpen, onClose }) {
+export default function FamilyContactsSidebar({ familyName,members, onContactClick, isOpen, onClose }) {
   return (
     <>
       {isOpen && (
@@ -26,7 +26,7 @@ export default function FamilyContactsSidebar({ members, onContactClick, isOpen,
                   <Users className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="font-bold text-gray-800">Family_Name</h2>
+                  <h2 className="font-bold text-gray-800">{familyName}</h2>
                   <p className="text-sm text-gray-500">{members.length} members</p>
                 </div>
               </div>

@@ -38,21 +38,8 @@ app.use(passport.session());
 const googleAuth = passport.authenticate("google", { failureRedirect: "/" });
 //Logged in middleware
 function isLoggedIn(req, res, next) {
- try {
-    // Extract JWT from cookies
-    const token = req.cookies?.authToken;
-    if (!token) {
-      return res.status(401).json({ message: "Unauthorized: No token provided" });
-    }
-   
-    req.user._id = token;
-
-    // Proceed to next middleware or route handler
-    next();
-  } catch (err) {
-    console.error("Auth Error:", err.message);
-    res.status(403).json({ message: "Invalid or expired token" });
-  }
+  if (req.isAuthenticated()) return next();
+  res.redirect("/signup");
 }
 //Function for generating random family_id
 function generateFamilyId() {
@@ -130,15 +117,18 @@ app.get(
 app.post("/", isLoggedIn, async (req, res) => {
   try {
     const userId = req.user._id;
+   
 
     const adminFamilies = await Family.find({ admin: userId });
+    const familyName = await Family.findById(req.user.family_id);
 
     const isAdmin = adminFamilies.length > 0;
 
     res.json({
       username: req.user.username,
       isAdmin,
-      adminFamilies 
+      adminFamilies,
+      family_name:familyName.family_name,
     });
   } catch (err) {
     console.error(err);
@@ -494,7 +484,8 @@ app.get("/create-family",isLoggedIn,async (req,res)=>{
   res.render('createFamily.ejs',{username,family_id})
 })
 
-app.post("/create-family",isLoggedIn, async (req, res) => {
+app.post("/create-family", async (req, res) => {
+  console.log(req.body);
   try {
     const { family_id ,family_name} = req.body;
     const userId = req.user._id;  
