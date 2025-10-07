@@ -37,6 +37,51 @@ export default function Dashboard() {
   const [isStoryDialogOpen, setIsStoryDialogOpen] = useState(false);
   const [visibleCards, setVisibleCards] = useState(new Set());
   const observerRefs = useRef([]);
+  const [user, setUser] = useState(null);
+
+
+
+
+
+
+
+
+useEffect(() => {
+    const verifyUser = async () => {
+      try {
+        const res = await fetch(`http://localhost:3128/`, {
+          method: "POST",
+          credentials: "include", // ✅ send cookies
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await res.json();
+        console.log("Verification response:", data);
+
+        if (data.ok) {
+          // You got your auth token and user details!
+          console.log("Auth Token:", data.auth_token);
+          setUser(data.user);
+        } else {
+         
+        }
+      } catch (error) {
+        console.error("Error verifying user:", error);
+      }
+    };
+
+    verifyUser();
+  }, []);
+
+
+
+
+
+
+
+
 
   const handleContactClick = (member) => {
     setSelectedMember(member);
