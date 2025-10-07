@@ -1,17 +1,21 @@
 import React, { useState } from "react";
-import { Users, Plus, Key, Sparkles} from "lucide-react";
+import { Plus, Key, Sparkles } from "lucide-react";
+import config from "../config";
+import { useNavigate } from "react-router-dom";
 
 export default function FamilySelection() {
+  // State management for dialogs, loading, and form inputs
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const [familyKey, setFamilyKey] = useState("");
-  const [familyName, setFamilyName] = useState("");
-  const [username, setUsername] = useState("");
+  const [family_id, setfamily_id] = useState("");
+  const [family_name, setFamily_name] = useState("");
+  const [family_username, setfamily_username] = useState("");
   const [generatedKey, setGeneratedKey] = useState("");
+  const navigator = useNavigate();
 
-  const generateFamilyKey = () => {
+  // Generate a unique 8-character family key
+  const generatefamily_id = () => {
     const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     let key = "";
     for (let i = 0; i < 8; i++) {
@@ -21,38 +25,89 @@ export default function FamilySelection() {
     return key;
   };
 
+  // Open create dialog with a pre-generated key
   const handleCreateDialogOpen = () => {
-    setGeneratedKey(generateFamilyKey());
+    setGeneratedKey(generatefamily_id());
     setShowCreateDialog(true);
   };
 
-  const handleJoinFamily = (e) => {
+  // Handle Join Family form submission → POST /api/family/join
+  const handleJoinFamily = async (e) => {
     e.preventDefault();
-    alert(`Joined family with key: ${familyKey}`);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/family/join", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ family_id, family_username }),
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`Joined family: ${data.family_name || family_id}`);
+        setShowJoinDialog(false);
+        setfamily_id("");
+        setfamily_username("");
+      } else {
+        alert(` ${data.message || "Unable to join family"}`);
+      }
+    } catch {
+      alert(" Network or server error occurred.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleCreateFamily = (e) => {
+  // Handle Create Family form submission → POST /api/family/create
+  const handleCreateFamily = async (e) => {
     e.preventDefault();
-    alert(`Family "${familyName}" created with key: ${generatedKey}`);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(`${config.BACKEND_URL}/create-family`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          family_name,
+          family_username,
+          family_id: generatedKey,
+        }),
+        credentials: "include",
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        alert(`Family "${data.family_name || family_name}" created!`);
+        setShowCreateDialog(false);
+        setFamily_name("");
+        setfamily_username("");
+      } else {
+        alert(`${data.message || "Unable to create family"}`);
+      }
+      navigator(`${data.route}`); // Redirect to the specified route
+    } catch {
+      alert("Network or server error occurred.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-200 via-blue-400 to-purple-500 flex items-center justify-center p-4 text-gray-900">
       <div className="w-full max-w-4xl">
-        {/* Header */}
+        {/* Header section */}
         <div className="text-center mb-12">
-        
-          <h1 className="text-5xl font-bold text-white mb-4">
-            Welcome 
-          </h1>
+          <h1 className="text-5xl font-bold text-white mb-4">Welcome</h1>
           <p className="text-lg text-gray-200">
             Join your family or create a new one to get started.
           </p>
         </div>
 
-        {/* Cards */}
+        {/* Action cards grid */}
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Join Family */}
+          {/* Join Family Card */}
           <div
             onClick={() => setShowJoinDialog(true)}
             className="cursor-pointer bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-200"
@@ -72,7 +127,7 @@ export default function FamilySelection() {
             </div>
           </div>
 
-          {/* Create Family */}
+          {/* Create Family Card */}
           <div
             onClick={handleCreateDialogOpen}
             className="cursor-pointer bg-white rounded-3xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-2 border border-gray-200"
@@ -93,7 +148,7 @@ export default function FamilySelection() {
           </div>
         </div>
 
-        {/* Join Dialog */}
+        {/* Join Dialog Modal */}
         {showJoinDialog && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
             <div className="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl">
@@ -104,24 +159,24 @@ export default function FamilySelection() {
                 <input
                   className="w-full border rounded-lg p-3"
                   placeholder="Enter Family Key"
-                  value={familyKey}
-                  onChange={(e) => setFamilyKey(e.target.value)}
+                  value={family_id}
+                  onChange={(e) => setfamily_id(e.target.value)}
                   required
                 />
                 <div className="or w-full text-center p-4 text-gray-600 font-bold">OR</div>
-                 <input
+                <input
                   className="w-full border rounded-lg p-3"
-                  placeholder="Enter Family username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Enter Family family_username"
+                  value={family_username}
+                  onChange={(e) => setfamily_username(e.target.value)}
                   required
                 />
-           
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
                 >
-                  Join
+                  {isSubmitting ? "Joining..." : "Join"}
                 </button>
                 <button
                   type="button"
@@ -135,7 +190,7 @@ export default function FamilySelection() {
           </div>
         )}
 
-        {/* Create Dialog */}
+        {/* Create Dialog Modal */}
         {showCreateDialog && (
           <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
             <div className="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl">
@@ -146,36 +201,35 @@ export default function FamilySelection() {
                 <input
                   className="w-full border rounded-lg p-3"
                   placeholder="Family Name"
-                  value={familyName}
-                  onChange={(e) => setFamilyName(e.target.value)}
+                  value={family_name}
+                  onChange={(e) => setFamily_name(e.target.value)}
                   required
                 />
                 <input
                   className="w-full border rounded-lg p-3"
-                  placeholder="Family Username"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="Family family_username"
+                  value={family_username}
+                  onChange={(e) => setfamily_username(e.target.value)}
                   required
                 />
-            
                 <div className="flex items-center justify-between border rounded-lg p-3 bg-purple-50">
                   <span className="font-mono text-purple-700 font-bold">
                     {generatedKey}
                   </span>
                   <button
                     type="button"
-                    onClick={() => setGeneratedKey(generateFamilyKey())}
+                    onClick={() => setGeneratedKey(generatefamily_id())}
                     className="text-purple-600 font-semibold"
                   >
                     Refresh
                   </button>
                 </div>
-
                 <button
                   type="submit"
+                  disabled={isSubmitting}
                   className="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700 transition"
                 >
-                  Create Family
+                  {isSubmitting ? "Creating..." : "Create Family"}
                 </button>
                 <button
                   type="button"

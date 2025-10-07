@@ -38,8 +38,21 @@ app.use(passport.session());
 const googleAuth = passport.authenticate("google", { failureRedirect: "/" });
 //Logged in middleware
 function isLoggedIn(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  res.redirect("/signup");
+ try {
+    // Extract JWT from cookies
+    const token = req.cookies?.authToken;
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized: No token provided" });
+    }
+   
+    req.user._id = token;
+
+    // Proceed to next middleware or route handler
+    next();
+  } catch (err) {
+    console.error("Auth Error:", err.message);
+    res.status(403).json({ message: "Invalid or expired token" });
+  }
 }
 //Function for generating random family_id
 function generateFamilyId() {
@@ -503,7 +516,7 @@ app.post("/create-family",isLoggedIn, async (req, res) => {
     // Update user's family_id
     await User.findByIdAndUpdate(userId, { family_id:family._id });
 //console.log(family)
-    res.redirect("/"); // or wherever
+    res.json({"route":"/dashboard"}); // or wherever
   } catch (err) {
     console.error(err);
     res.status(500).send("Error creating family.");
