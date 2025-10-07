@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Invite to Family - <%= family.family_name %></title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      background-color: #f7f9fc;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      padding: 20px;
+    }
+    .invite-card {
+      max-width: 500px;
+      width: 100%;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+    .invite-card h2 {
+      margin-bottom: 20px;
+      text-align: center;
+      color: #333;
+    }
+    .btn-send {
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="invite-card">
+    <h2>Invite someone to <%= family.family_name %></h2>
+
+    <form action="/join-family/<%= family._id %>/invite" method="POST">
+      <div class="mb-3">
+        <label for="email" class="form-label">Email to invite</label>
+        <input type="email" name="email" id="email" class="form-control" placeholder="user@example.com" required>
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-send">Send Invitation</button>
+    </form>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+
