@@ -1,212 +1,205 @@
-const express = require("express");
-const session = require("express-session");
-const passport = require("passport");
-require("dotenv").config();
-require("./config/passport");
-const mongoose = require("mongoose");
-const path= require ('path')
-const User=require('./models/userModel')
-const Family=require('./models/familyModel')
-const sendMail = require("./config/mailer");
-const crypto = require("crypto");
-const cookieParser = require("cookie-parser");
-const cors = require("cors");
-const app = express();
+const express = require("express"); 
+const session = require("express-session"); 
+const passport = require("passport"); 
+require("dotenv").config(); 
+require("./config/passport"); 
+const mongoose = require("mongoose"); 
+const path = require("path"); 
+const User = require("./models/userModel"); 
+const Family = require("./models/familyModel"); 
+const sendMail = require("./config/mailer"); 
+const crypto = require("crypto"); 
+const cookieParser = require("cookie-parser"); 
+const cors = require("cors"); 
+const jwt = require("jsonwebtoken"); 
 
+const app = express();  
 
-//middlewares
-app.set('view engine','ejs')
-app.set('views',path.join(__dirname, "views"));
-app.use(express.urlencoded({ extended: true}));
-mongoose.connect("mongodb://127.0.0.1:27017/legacy_trunk");
-app.use(express.json());
-app.use(cookieParser());
-app.use(cors({
-  origin: "http://localhost:3000", // your frontend URL
-  credentials: true, // allow session cookie from browser to pass through
-}));
+// Set view engine to EJS and views directory
+app.set("view engine", "ejs"); 
+app.set("views", path.join(__dirname, "views")); 
+app.use(express.urlencoded({ extended: true })); 
+app.use(express.json()); 
+app.use(cookieParser()); 
 
-app.use(session({
-  secret: "secret_key",
-  resave: false,
-  saveUninitialized: false
-}));
+// Enable CORS for frontend interaction
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 
-app.use(passport.initialize());
-app.use(passport.session());
-//Middlewares
-const googleAuth = passport.authenticate("google", { failureRedirect: "/" });
-//Logged in middleware
-function isLoggedIn(req, res, next) {
-  if (req.isAuthenticated()) return next();
-  res.redirect("/signup");
-}
-//Function for generating random family_id
-function generateFamilyId() {
-  // Generate a random number between 10000 and 99999
-  const randomNumber = Math.floor(10000 + Math.random() * 90000);
-  return `#${randomNumber}`;
-}
+// Connect to MongoDB
+mongoose.connect("mongodb://127.0.0.1:27017/legacy_trunk");  
 
-// Routes
-//AUTHORIZATION ROUTES:~
-// Google
-// Google callback route
-app.get('/auth/google',
-  passport.authenticate('google', { scope: ['profile','email'] }));
-app.get(
-  "/auth/google/callback",
-  googleAuth,
-  async (req, res) => {
-    try {
-      const userId = req.user._id;
-      const user = await User.findById(userId);
-      res.cookie("authToken", req.user._id, {
-    httpOnly: true, // cannot be accessed by JS
-    secure: false, // true if using HTTPS
-    sameSite: "lax",
-    maxAge: 24 * 60 * 60 * 1000, // 1 day
-  });
+// Session and Passport initialization
+app.use(session({ secret: "secret_key", resave: false, saveUninitialized: false }));
+app.use(passport.initialize()); 
+app.use(passport.session());  
 
-      // 1️⃣ Check for pending invite matching user's Google email
-      const pendingFamily = await Family.findOne({
-        "invites.email": user.email,
-        "invites.status": "pending"
-      });
+// Google authentication route setup
+const googleAuth = passport.authenticate("google", { failureRedirect: "/" });  
 
-      if (pendingFamily) {
-        const invite = pendingFamily.invites.find(
-          i => i.email === user.email && i.status === "pending"
-        );
+// Authentication middleware using JWT stored in cookies
+function isLoggedIn(req, res, next) { 
+  try { 
+    const token = req.cookies?.authToken; 
+    if (!token) return res.redirect("/signup"); 
+    const userId = token; 
+    req.user = { _id: userId }; 
+    next(); 
+  } catch (err) { 
+    console.error("Auth middleware error:", err.message); 
+    return res.redirect("/signup"); 
+  } 
+}  
 
-        // Add user to family if not already a member
-        if (!pendingFamily.members.includes(user._id)) {
-          pendingFamily.members.push(user._id);
-          invite.status = "accepted";
-          await pendingFamily.save();
+// Helper function to generate unique Family ID
+function generateFamilyId() { 
+  const randomNumber = Math.floor(10000 + Math.random() * 90000); 
+  return `#${randomNumber}`; 
+}  
 
-          // Update user's family_id
-          user.family_id = pendingFamily._id;
-          await user.save();
-        }
-      }
+// Google authentication route
+app.get("/auth/google", passport.authenticate("google", { scope: ["profile", "email"] })); 
 
-      // 2️⃣ Continue your existing redirect logic
-      if (!user.username || !user.age) {
-        return res.redirect("http://localhost:3000/profile");
-      } else if (!user.family_id) {
-        return res.redirect('http://localhost:3000/family-select');
-      } else {
-        return res.redirect('http://localhost:3000/dashboard');
-      }
+// Google authentication callback and user processing
+app.get("/auth/google/callback", googleAuth, async (req, res) => {  
+  try { 
+    const userId = req.user._id; 
+    const user = await User.findById(userId); 
 
-    } catch (err) {
-      console.error(err);
-      res.status(500).send("Server error");
-    }
-  }
-);
+    // Store user ID as token in cookie
+    res.cookie("authToken", req.user._id, { httpOnly: true, secure: false, sameSite: "lax", maxAge: 24 * 60 * 60 * 1000 });  
 
+    // Auto-join family if there's a pending invite for the user
+    const pendingFamily = await Family.findOne({ "invites.email": user.email, "invites.status": "pending" });  
+    if (pendingFamily) { 
+      const invite = pendingFamily.invites.find((i) => i.email === user.email && i.status === "pending"); 
+      if (!pendingFamily.members.includes(user._id)) { 
+        pendingFamily.members.push(user._id); 
+        invite.status = "accepted"; 
+        await pendingFamily.save(); 
+        user.family_id = pendingFamily._id; 
+        await user.save(); 
+      } 
+    }  
 
+    // Redirect user based on profile completion
+    if (!user.username || !user.age) return res.redirect("http://localhost:3000/profile"); 
+    if (!user.family_id) return res.redirect("http://localhost:3000/family-select"); 
+    return res.redirect("http://localhost:3000/dashboard");  
+  } catch (err) { 
+    console.error(err); 
+    res.status(500).send("Server error"); 
+  } 
+});  
 
+// Dashboard route that fetches user and family details
+app.post("/", isLoggedIn, async (req, res) => { 
+  try { 
+    const user = await User.findById(req.user._id); 
+    const adminFamilies = await Family.find({ admin: req.user._id }); 
+    const family = await Family.findById(user.family_id);  
 
+    res.json({ 
+      username: user.username, 
+      isAdmin: adminFamilies.length > 0, 
+      adminFamilies, 
+      family_name: family ? family.family_name : "", 
+    }); 
+  } catch (err) { 
+    console.error(err); 
+    res.status(500).send("Server error"); 
+  } 
+});  
 
+// Signup page rendering route
+app.get("/signup", (req, res) => res.render("signup"));  
 
+// Profile completion route
+app.post("/complete-profile", isLoggedIn, async (req, res) => { 
+  try { 
+    const { username, age } = req.body; 
+    const userId = req.user._id;  
 
+    if (!userId) return res.json({ route: "/family-select" });  
 
-app.post("/", isLoggedIn, async (req, res) => {
-  try {
-    const userId = req.user._id;
-   
+    // Check if username is already taken
+    const existingUser = await User.findOne({ username }); 
+    if (existingUser && existingUser._id.toString() !== userId.toString()) { 
+      return res.json({ error: "Username already taken, please choose another." }); 
+    }  
 
-    const adminFamilies = await Family.find({ admin: userId });
-    const familyName = await Family.findById(req.user.family_id);
+    // Update user profile information
+    const updatedUser = await User.findByIdAndUpdate(userId, { username, age }, { new: true }); 
+    if (!updatedUser) return res.json({ route: "/signup" });  
+    res.json({ route: "/family-select" });  
+  } catch (err) { 
+    console.error(err); 
+    res.json({ msg: "Error in connecting, we will get back to you." }); 
+  } 
+});  
 
-    const isAdmin = adminFamilies.length > 0;
+// Join existing family page route
+app.get("/join-family", isLoggedIn, async (req, res) => {  
+  try { 
+    const user = await User.findById(req.user._id); 
+    const families = await Family.find({}).populate("admin");  
+    res.render("joinFamily.ejs", { 
+      username: user.username, 
+      families, 
+      currentUserId: req.user._id, 
+    });  
+  } catch (err) { 
+    console.error(err); 
+    res.status(500).send("Server error");  
+  } 
+});  
 
-    res.json({
-      username: req.user.username,
-      isAdmin,
-      adminFamilies,
-      family_name:familyName.family_name,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
+// Create a new family route
+app.get("/create-family", isLoggedIn, async (req, res) => {  
+  const userId = req.user._id; 
+  const existingFamily = await Family.findOne({ admin: userId }); 
+  if (existingFamily) return res.status(400).send("You are already an admin of another family.");  
 
+  const user = await User.findById(userId); 
+  const family_id = generateFamilyId(); 
+  res.render("createFamily.ejs", { username: user.username, family_id });  
+});  
 
-app.get('/signup',(req,res)=>{
-    res.render("signup")
-})
+// Handle new family creation
+app.post("/create-family", isLoggedIn, async (req, res) => {  
+  try { 
+    const { family_id, family_name } = req.body; 
+    const userId = req.user._id;  
 
-// app.get ('/complete-profile',isLoggedIn,(req,res)=>{
-//   res.render('completeProfile.ejs');
-// })
+    // Prevent duplicate family IDs
+    const existingFamily = await Family.findOne({ family_id }); 
+    if (existingFamily) return res.status(400).send("Family ID already taken.");  
 
-app.post('/complete-profile', isLoggedIn, async (req, res) => {
-  try {
+    // Save new family and assign to user
+    const family = new Family({ 
+      admin: userId, 
+      family_id, 
+      family_name, 
+      members: [userId], 
+    });  
 
-    const { username, age } = req.body;
-    const userId = req.user._id;
+    await family.save(); 
+    await User.findByIdAndUpdate(userId, { family_id: family._id });  
 
-    // 1. Check if the user exists
-    if (!userId) {
-      // return res.redirect('http://localhost:3000/family-select');
-      return res.json({"route":'/family-select'});
-    }
+    res.json({ route: "/dashboard" });  
+  } catch (err) { 
+    console.error(err); 
+    res.status(500).send("Error creating family.");  
+  } 
+});  
 
-    // 2. Check if username is already taken by another user
-    const existingUser = await User.findOne({ username });
-    if (existingUser && existingUser._id.toString() !== userId.toString()) {
-      // If username is used by someone else, show alert
-      
-      return res.json({ 
-        error: "Username already taken, please choose another." 
-      });
-    }
-
-    // 3. Update user profile
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { username, age },
-      { new: true } // return updated document
-    );
-
-    if (!updatedUser) {
-      return res.json({"route":'/signup'});
-      // return res.redirect('http://localhost:3000');
-    }
-
-    res.json({"route":'/family-select'});
-  } catch (err) {
-    console.error(err);
-    res.json({"msg":'Error in connecting, we will get back to you.'});
-  }
-});
-
-
-
-
-app.get('/join-family', isLoggedIn, async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const families = await Family.find({}).populate("admin");
-
-    const user = await User.findById(userId);
-    const username = user ? user.username : "";
-
-    res.render('joinFamily.ejs', {
-      username,
-      families,
-      currentUserId: userId 
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
+// Logout route to destroy session and clear cookies
+app.get("/logout", (req, res) => { 
+  req.session.destroy((err) => { 
+    if (err) return res.status(500).send("Error logging out"); 
+    res.clearCookie("connect.sid"); 
+    res.redirect("/signup"); 
+  }); 
+});  
 
 
 //Sending a joining request
@@ -468,82 +461,7 @@ app.post("/join-family/:familyId/requests/:requestId/reject", isLoggedIn, async 
   }
 });
 
+// Start server on port 3128
+app.listen(3128, () => console.log("Server running on http://localhost:3128")); 
 
-
-
-app.get("/create-family",isLoggedIn,async (req,res)=>{
-  const userId = req.user._id; 
-   const existingFamily = await Family.findOne({ admin: userId });
- if (existingFamily) {
-      return res.status(400).send("You are already an admin of another family.");
-    }
-  
-  const user=await User.findById(userId);
- const username = user ? user.username : "";
- const family_id=generateFamilyId();
-  res.render('createFamily.ejs',{username,family_id})
-})
-
-app.post("/create-family", async (req, res) => {
-  console.log(req.body);
-  try {
-    const { family_id ,family_name} = req.body;
-    const userId = req.user._id;  
-    // Check if family_id already exists
-    const existingFamily = await Family.findOne({ "family_id":family_id });
-    if (existingFamily) {
-      return res.status(400).send("Family ID already taken.");
-    }
-   
-    const family = new Family({
-      admin: userId,
-      family_id,
-      family_name,
-      members: [userId]
-    });
-
-    await family.save();
-
-    // Update user's family_id
-    await User.findByIdAndUpdate(userId, { family_id:family._id });
-//console.log(family)
-    res.json({"route":"/dashboard"}); // or wherever
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Error creating family.");
-  }
-});
-
-
-
-    
-
-// Facebook (I am keeping it for google only for now)
-
-// app.get("/auth/facebook", passport.authenticate("facebook", { scope: ["email"] }));
-// app.get("/auth/facebook/callback", passport.authenticate("facebook", { failureRedirect: "/" }),
-//   (req, res) => res.send(`Welcome ${req.user.name}!`)
-// );
-
-// // Instagram
-// app.get("/auth/instagram", passport.authenticate("instagram"));
-// app.get("/auth/instagram/callback", passport.authenticate("instagram", { failureRedirect: "/" }),
-//   (req, res) => res.send(`Welcome ${req.user.name}!`)
-// );
-
-
-
-app.get("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) {
-      return res.status(500).send("Error logging out");
-    }
-    res.clearCookie("connect.sid"); 
-    res.redirect("/singup");
-  });
-});
-
-
-
-app.listen(3128, () => console.log("Server running on http://localhost:3128"));
 
