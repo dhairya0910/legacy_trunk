@@ -46,7 +46,6 @@ export default function FamilySelection() {
       const data = await res.json();
 
       if (res.ok) {
-        alert(`Joined family: ${data.family_name || family_id}`);
         setShowJoinDialog(false);
         setfamily_id("");
         setfamily_username("");

@@ -12,6 +12,7 @@ import YourPosts from './pages/YourPosts';
 import Profile from './pages/Profile';
 import Socket from './api/Socket';
 import InviteMember from './pages/InviteMember';
+import Requests from './pages/Requests';
 
 function App() {
   return <>
@@ -29,6 +30,7 @@ function App() {
         <Route path="/socket" element={<Socket/>} />
         <Route path="/profile" element={<Profile/>} />
         <Route path="/invite" element={<InviteMember/>} />
+        <Route path="/requests" element={<Requests/>} />
 
       </Routes>
     </Router>

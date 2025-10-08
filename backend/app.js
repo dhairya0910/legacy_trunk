@@ -215,13 +215,13 @@ app.post("/join-family/invite", isLoggedIn, async (req, res) => {
    
 
     // 3. Send invitation email
-    // const inviteLink = `http://localhost:3128/join-family/${familyId}/invite/${token}`;
+    const inviteLink = `http://localhost:3128/join-family/${familyId}/invite/${token}`;
     await sendMail(
       email,
       "You're invited to join a family 🎉",
       `<p>Hi there,</p>
        <p>You have been invited to join the family <b>${family.family_name}</b>.</p>
-       <p>Click <a href="${12}">here</a> to sign in and join automatically!</p>`
+       <p>Click <a href="${inviteLink}">here</a> to sign in and join automatically!</p>`
     );
  
     console.log("Invitation sent successfully!");
@@ -272,6 +272,7 @@ app.post("/join-family/send-request", isLoggedIn, async (req, res) => {
     console.log("Family Found:", family.family_name);
 
     // Prevent duplicate membership
+    console.log("Current Family Members:", family.members);
     if (family.members.some(m => m.toString() === userId.toString())) {
       console.log("User already a member of this family");
       return res.status(400).json({ message: "You are already a member" });
@@ -317,6 +318,148 @@ app.post("/join-family/send-request", isLoggedIn, async (req, res) => {
   }
 });
 
+
+//SHow requests
+app.post("/join-family/requests", isLoggedIn, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId)
+    const familyId = user.family_id;
+    // Find family by _id
+    const family = await Family.findById(familyId)
+    if (!family) return res.status(404).send("Family not found");
+    // Only admin can view requests
+    if (family.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).send("Not authorized");
+    }
+
+    // Get pending requests
+        const pendingRequests = await Promise.all(
+      family.joinRequests
+        .filter(r => r.status === "pending")
+        .map(async reqObj => {
+          const reqUser = await User.findById(reqObj.userId);
+          return {
+            name: reqUser?.name || "Unknown",
+            createdAt: reqObj.createdAt,
+            userId: reqObj.userId,
+            familyId: family._id,
+            
+          };
+        })
+    );
+  
+
+    res.json({ family, pendingRequests });
+   
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({"msg":"Server error"});
+  }
+});
+
+
+// Approve or reject
+app.post("/join-family/requests/:familyId/:requestId/approve", isLoggedIn, async (req, res) => {
+  try {
+    const { familyId, requestId } = req.params;
+    console.log("Approve Params:", req.params);
+
+    // 1. Find the family
+    const family = await Family.findById(familyId);
+    if (!family) return res.status(404).send("Family not found");
+
+
+    // 2. Check admin authorization
+    if (family.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).send("Not authorized");
+    }
+
+    // 3. Find the specific request
+   const request = family.joinRequests.find(
+  (r) => r.userId.toString() === requestId.toString()
+);
+
+   
+    if (!request) return res.status(404).send("Request not found");
+
+    // 4. Fetch the user who sent the request
+    const user = await User.findById(request.userId);
+    if (!user) return res.status(404).send("Requesting user not found");
+    // 5. Approve the request
+    request.status = "approved";
+    family.members.push(request.userId);
+    await family.save();
+
+    // 6. Update user's family_id in User collection
+    await User.findByIdAndUpdate(request.userId, { family_id: family._id });
+
+    // 7. Send email to the requesting user
+    await sendMail(
+      user.email,
+      "Your Family Request was Accepted 🎉",
+      `<p>Hi ${user.name || "there"},</p>
+       <p>Your request to join the family <b>${family.family_name}</b> has been accepted!</p>
+       <p>Welcome to the family 💫</p>`
+    );
+
+    res.redirect(`/join-family/${family._id}/requests`);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Server error");
+  }
+});
+
+
+// Reject a family join request
+app.post("/join-family/requests/:familyId/:requestId/reject", isLoggedIn, async (req, res) => {
+  try {
+    const { familyId, requestId } = req.params;
+    console.log("Reject Params:", req.params);
+
+    // 1. Find the family
+    const family = await Family.findById(familyId);
+    if (!family) return res.status(404).json({ message: "Family not found" });
+
+    // 2. Check admin authorization
+    if (family.admin.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized" });
+    }
+
+    // 3. Find the join request by userId
+    const request = family.joinRequests.find(
+      (r) => r.userId.toString() === requestId.toString()
+    );
+    if (!request) return res.status(404).json({ message: "Request not found" });
+
+    // 4. Fetch the user who sent the request
+    const user = await User.findById(request.userId);
+    if (!user) return res.status(404).json({ message: "Requesting user not found" });
+
+    // 5. Reject the request
+    request.status = "rejected";
+    await family.save();
+
+    // 6. Send rejection email to the requesting user
+    await sendMail(
+      user.email,
+      "Your Family Join Request Was Rejected ❌",
+      `<p>Hi ${user.name || "there"},</p>
+       <p>We're sorry to inform you that your request to join the family 
+       <b>${family.family_name}</b> was <b>rejected</b>.</p>
+       <p>You may reach out to the family admin for more details.</p>`
+    );
+
+    // 7. Redirect or send success response
+    res.redirect(`/join-family/${family._id}/requests`);
+
+  } catch (err) {
+    console.error("Reject request error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
 // Logout route to destroy session and clear cookies
 app.get("/logout", (req, res) => { 
   req.session.destroy((err) => { 
@@ -330,10 +473,7 @@ app.get("/logout", (req, res) => {
 
 
 
-
-
-
-
+//Resctrucuture code from here
 
 
 
@@ -415,104 +555,6 @@ app.post("/join-family/:familyId/invite/complete-signup", async (req, res) => {
   }
 });
 
-
-
-
-
-//SHow requests
-app.get("/join-family/:familyId/requests", isLoggedIn, async (req, res) => {
-  try {
-    const familyId = req.params.familyId;
-
-    // Find family by _id
-    const family = await Family.findById(familyId).populate("joinRequests.userId");
-    if (!family) return res.status(404).send("Family not found");
-
-    // Only admin can view requests
-    if (family.admin.toString() !== req.user._id.toString()) {
-      return res.status(403).send("Not authorized");
-    }
-
-    // Get pending requests
-    const pendingRequests = family.joinRequests.filter(r => r.status === "pending");
-
-    res.render("showRequests.ejs", { family, pendingRequests });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
-
-
-// Approve or reject
-app.post("/join-family/:familyId/requests/:requestId/approve", isLoggedIn, async (req, res) => {
-  try {
-    const { familyId, requestId } = req.params;
-
-    // 1. Find the family
-    const family = await Family.findById(familyId);
-    if (!family) return res.status(404).send("Family not found");
-
-    // 2. Check admin authorization
-    if (family.admin.toString() !== req.user._id.toString()) {
-      return res.status(403).send("Not authorized");
-    }
-
-    // 3. Find the specific request
-    const request = family.joinRequests.id(requestId);
-    if (!request) return res.status(404).send("Request not found");
-
-    // 4. Fetch the user who sent the request
-    const user = await User.findById(request.userId);
-    if (!user) return res.status(404).send("Requesting user not found");
-
-    // 5. Approve the request
-    request.status = "approved";
-    family.members.push(request.userId);
-    await family.save();
-
-    // 6. Update user's family_id in User collection
-    await User.findByIdAndUpdate(request.userId, { family_id: family._id });
-
-    // 7. Send email to the requesting user
-    await sendMail(
-      user.email,
-      "Your Family Request was Accepted 🎉",
-      `<p>Hi ${user.username || "there"},</p>
-       <p>Your request to join the family <b>${family.family_name}</b> has been accepted!</p>
-       <p>Welcome to the family 💫</p>`
-    );
-
-    res.redirect(`/join-family/${family._id}/requests`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
-
-
-app.post("/join-family/:familyId/requests/:requestId/reject", isLoggedIn, async (req, res) => {
-  try {
-    const { familyId, requestId } = req.params;
-    const family = await Family.findById(familyId);
-    if (!family) return res.status(404).send("Family not found");
-
-    if (family.admin.toString() !== req.user._id.toString()) {
-      return res.status(403).send("Not authorized");
-    }
-
-    const request = family.joinRequests.id(requestId);
-    if (!request) return res.status(404).send("Request not found");
-
-    request.status = "rejected";
-    await family.save();
-
-    res.redirect(`/join-family/${family._id}/requests`);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
 
 // Start server on port 3128
 app.listen(3128, () => console.log("Server running on http://localhost:3128")); 
