@@ -2,23 +2,34 @@ import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Phone, Video } from "lucide-react";
 import { io } from "socket.io-client";
+import { useRef } from "react";
 
 // Initialize socket connection
 const socket = io("http://localhost:3128");
 
-export default function ChatOverlay({ yourId, initialMsg, member, isOpen, onClose }) {
+export default function ChatOverlay({
+  yourId,
+  initialMsg,
+  member,
+  isOpen,
+  onClose,
+}) {
   const [message, setMessage] = useState(""); // Current input message
-  const [messages, setMessages] = useState([]); // All messages (new + existing)
+  const [messages, setMessages] = useState([]); // new messages
+  const messagesEndRef = useRef(null);
+
+  //Scroll down when new messages appear
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
   useEffect(() => {
     // Clear chat and rejoin on user or member change
     setMessages([]);
     socket.emit("join", yourId);
-    
 
     // Listen for new incoming messages
     socket.on("receive_message", (msg) => {
-      
       setMessages((prev) => [...prev, msg]);
     });
 
@@ -108,7 +119,9 @@ export default function ChatOverlay({ yourId, initialMsg, member, isOpen, onClos
                   key={msg._id || index}
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className={`flex ${msg.sender === yourId ? "justify-end" : "justify-start"}`}
+                  className={`flex ${
+                    msg.sender === yourId ? "justify-end" : "justify-start"
+                  }`}
                 >
                   <div
                     className={`max-w-xs px-4 py-2 rounded-2xl shadow-sm ${
@@ -120,7 +133,9 @@ export default function ChatOverlay({ yourId, initialMsg, member, isOpen, onClos
                     <p className="text-sm">{msg.text}</p>
                     <p
                       className={`text-xs mt-1 ${
-                        msg.sender === yourId ? "text-emerald-100" : "text-gray-400"
+                        msg.sender === yourId
+                          ? "text-emerald-100"
+                          : "text-gray-400"
                       }`}
                     >
                       <span className="float-right">
@@ -134,6 +149,7 @@ export default function ChatOverlay({ yourId, initialMsg, member, isOpen, onClos
                   </div>
                 </motion.div>
               ))}
+              <div ref={messagesEndRef} />
             </div>
 
             {/* Message Input Section */}
