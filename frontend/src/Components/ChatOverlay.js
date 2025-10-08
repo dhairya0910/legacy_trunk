@@ -10,6 +10,7 @@ export default function ChatOverlay({ member, isOpen, onClose }) {
     { id: 3, text: "Can't wait to see them!", sender: "them", time: "10:33 AM" }
   ]);
 
+
   const handleSend = () => {
     if (!message.trim()) return;
     

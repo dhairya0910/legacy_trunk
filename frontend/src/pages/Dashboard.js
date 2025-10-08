@@ -13,11 +13,11 @@ import { Helmet } from "react-helmet";
 
 const dummyMembers = [
   { id: 1, name: "Grandma Lakshmi", status: "Just returned from morning walk", last_seen: "2 minutes ago" },
-  { id: 2, name: "Papa (Rajesh)", status: "At the office", last_seen: "5 minutes ago" },
-  { id: 3, name: "Mummy (Priya)", status: "Cooking your favorite biryani!", last_seen: "Just now" },
-  { id: 4, name: "Didi (Anjali)", status: "Studying for exams", last_seen: "10 minutes ago" },
-  { id: 5, name: "Chachu (Amit)", status: "Playing cricket with kids", last_seen: "15 minutes ago" },
-  { id: 6, name: "Bhabhi (Neha)", status: "Planning weekend picnic", last_seen: "20 minutes ago" }
+//   { id: 2, name: "Papa (Rajesh)", status: "At the office", last_seen: "5 minutes ago" },
+//   { id: 3, name: "Mummy (Priya)", status: "Cooking your favorite biryani!", last_seen: "Just now" },
+//   { id: 4, name: "Didi (Anjali)", status: "Studying for exams", last_seen: "10 minutes ago" },
+//   { id: 5, name: "Chachu (Amit)", status: "Playing cricket with kids", last_seen: "15 minutes ago" },
+//   { id: 6, name: "Bhabhi (Neha)", status: "Planning weekend picnic", last_seen: "20 minutes ago" }
 ];
 
 const dummyMemories = [
@@ -28,7 +28,7 @@ const dummyMemories = [
 ];
 
 export default function Dashboard() {
-  const [members, setMembers] = useState(dummyMembers);
+  const [members, setMembers] = useState([]);
   const [memories, setMemories] = useState(dummyMemories);
   const [selectedMember, setSelectedMember] = useState(null);
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -74,7 +74,32 @@ useEffect(() => {
       }
     };
 
+    const fetchMembers = async() =>{
+        try {
+        const res = await fetch(`http://localhost:3128/family/members`, {
+          method: "POST",
+          credentials: "include", // send cookies
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        const data = await res.json();
+       
+        
+        if (res.ok) {
+          setMembers(data.members);
+       
+        } else {
+         
+        }
+      } catch (error) {
+        console.error("Error verifying user:", error);
+      }
+    }
+
     verifyUser();
+    fetchMembers();
   }, []);
 
 
