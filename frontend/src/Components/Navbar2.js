@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { User, LogOut, UserCircle } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { useNavigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
 export default function Navbar2() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [user, setUser] = useState(null);
@@ -42,9 +42,17 @@ export default function Navbar2() {
   }
 
   const handleLogout = async () => {
-    // fake logout
-    setUser(null);
-    window.location.reload();
+    const res = await fetch("http://localhost:3128/logout", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          console.log(data);
+          navigator('/')
+        }
   };
 
   return (

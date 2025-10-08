@@ -27,6 +27,8 @@ export default function Requests() {
       if (res.ok) {
         setFamily(data.family);
         setRequests(data.pendingRequests || []);
+        window.location.reload();
+
       } else {
         console.error(" Error fetching requests:", data.message);
       }
