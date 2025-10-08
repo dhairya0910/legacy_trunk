@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: String,
   photo: String,
+  online: { type: Boolean, default: false },       // online status
+  lastSeen: { type: Date, default: null },         // last seen timestamp
   family_id:  { type: mongoose.Schema.Types.ObjectId, ref: "Family" },
   username: { type: String, unique: true,trim: true},
   createdAt: { type: Date, default: Date.now },
