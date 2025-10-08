@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Story</title>
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<style>
+body {
+  background: #000;
+}
+.progress-bar {
+  height: 3px;
+  background: rgba(255,255,255,0.3);
+  border-radius: 2px;
+}
+.progress {
+  height: 100%;
+  background: white;
+  border-radius: 2px;
+  animation: progress 10s linear forwards;
+}
+@keyframes progress {
+  from { width: 0%; }
+  to { width: 100%; }
+}
+</style>
+</head>
+<body class="min-h-screen text-white">
+
+<div class="max-w-md mx-auto relative h-screen">
+  <!-- PROGRESS BARS -->
+  <div class="absolute top-4 left-4 right-4 flex space-x-1 z-10">
+    <div class="flex-1 progress-bar">
+      <div class="progress"></div>
+    </div>
+  </div>
+
+  <!-- STORY CONTENT -->
+  <div class="h-full flex items-center justify-center">
+    <% if(story.mediaType === 'video'){ %>
+      <video controls autoplay class="w-full h-full object-contain">
+        <source src="<%= story.media %>">
+        Your browser does not support the video tag.
+      </video>
+    <% } else { %>
+      <img src="<%= story.media %>" class="w-full h-full object-contain" alt="Story">
+    <% } %>
+  </div>
+
+  <!-- CLOSE BUTTON -->
+  <a href="/" class="absolute top-6 right-4 text-white z-20">
+    <span class="material-icons text-2xl">close</span>
+  </a>
+
+  <!-- VIEWS COUNT -->
+  <div class="absolute bottom-6 left-4 text-white text-sm">
+    <%= story.views ? story.views.length : 0 %> views
+  </div>
+</div>
+
+<script>
+// Auto-close after 10 seconds
+setTimeout(() => {
+  window.location.href = '/';
+}, 10000);
+</script>
+
+</body>
+</html>

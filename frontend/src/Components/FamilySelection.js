@@ -177,7 +177,7 @@ export default function FamilySelection() {
                   disabled={isSubmitting}
                   className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition"
                 >
-                  {isSubmitting ? "Joining..." : "Join"}
+                  {isSubmitting ? "Please wait..." : "Join"}
                 </button>
                 <button
                   type="button"

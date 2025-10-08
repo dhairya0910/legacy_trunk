@@ -472,10 +472,7 @@ app.get("/logout", (req, res) => {
 
 
 
-
 //Resctrucuture code from here
-
-
 
 //Inviting a member to a family
 
@@ -489,28 +486,6 @@ app.get("/join-family/:familyId/invite", isLoggedIn, async (req, res) => {
 
   res.render("invite", { family });
 });
-
-
-app.get("/join-family/:familyId/invite/:token", async (req, res) => {
-  try {
-    const { token } = req.params;
-
-    // 1. Find the family invite with this token
-    const family = await Family.findOne({ "invites.token": token });
-    if (!family) return res.status(404).send("Invalid or expired invite");
-
-    const invite = family.invites.find(i => i.token === token);
-    if (invite.status !== "pending") return res.send("Invite already used");
-
-    // 2. Render a signup/signin page with token hidden
-    res.render("signup", { token, familyName: family.family_name });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
-
-
 
 
 
@@ -558,5 +533,9 @@ app.post("/join-family/:familyId/invite/complete-signup", async (req, res) => {
 
 // Start server on port 3128
 app.listen(3128, () => console.log("Server running on http://localhost:3128")); 
+
+
+
+
 
 
