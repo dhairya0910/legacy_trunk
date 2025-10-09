@@ -1,7 +1,5 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { Calendar, Image as ImageIcon, FileText, Video } from "lucide-react";
-import { format } from "date-fns";
 
 const typeIcons = {
   photo: ImageIcon,
@@ -39,7 +37,7 @@ export default function TimelineCard({ memory, index, inView }) {
               <div className="w-20 h-20 rounded-xl overflow-hidden shadow-md flex-shrink-0">
                 <img
                   src={memory.image_url}
-                  alt={memory.title}
+                  alt={memory.text}
                   className="w-full h-full object-cover"
                 />
               </div>
@@ -47,20 +45,22 @@ export default function TimelineCard({ memory, index, inView }) {
             
             <div className="flex-1 min-w-0">
               <h3 className="font-bold text-gray-800 text-lg mb-1">
-                {memory.title}
+                {memory.text}
               </h3>
               <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                {memory.description}
+               {memory.description?.replace(/^(.{10}).*$/, "$1...")}
+
               </p>
               
               <div className="flex items-center gap-4 text-xs text-gray-500">
                 <div className="flex items-center gap-1">
                   <Calendar className="w-3 h-3" />
-                  {format(new Date(memory.upload_date || memory.created_date), "MMM d, yyyy")}
+                {new Date(memory.createdAt).toLocaleString("en-IN", { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: true })}
+
                 </div>
-                {memory.family_member && (
+                {memory.member_name && (
                   <span className="text-emerald-600 font-medium">
-                    by {memory.family_member}
+                    by {memory.member_name}
                   </span>
                 )}
               </div>

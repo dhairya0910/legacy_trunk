@@ -93,7 +93,27 @@ export default function Dashboard() {
         console.error("Error fetching members:", error.message);
       }
     };
+    
+    const fetchAllPosts = async () => {
+      try {
+        const res = await fetch("http://localhost:3128/family/fetch-all-posts", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
 
+        const data = await res.json();
+        console.log("Family posts loaded:", data.items);
+        if (res.ok) {
+          setMemories(data.items);
+        }
+      } catch (error) {
+        console.error("Error fetching members:", error.message);
+      }
+    };
+    
+
+    fetchAllPosts();
     verifyUser();
     fetchMembers();
   }, [yourId]);

@@ -18,11 +18,14 @@
     "global-agent": "^3.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.18.3",
+    "multer": "^2.0.2",
     "nodemailer": "^7.0.6",
     "passport": "^0.7.0",
     "passport-facebook": "^3.0.0",
     "passport-google-oauth20": "^2.0.0",
     "passport-instagram": "^1.0.0",
+    "path": "^0.12.7",
+    "pdfkit": "^0.17.2",
     "socket.io": "^4.8.1"
   }
 }

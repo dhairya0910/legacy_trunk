@@ -495,16 +495,6 @@ app.post(
   }
 );
 
-// Logout route to destroy session and clear cookies
-app.get("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) return res.status(500).send("Error logging out");
-    res.clearCookie("connect.sid");
-    res.redirect("/signup");
-  });
-});
-
-
 
 //fetching the family members
 app.post("/family/members", isLoggedIn, async (req, res) => {
@@ -526,7 +516,6 @@ app.post("/family/members", isLoggedIn, async (req, res) => {
     res.json({ members: [] });
   }
 });
-
 
 
 const Message = require("./models/MessageModel");
@@ -567,6 +556,173 @@ app.post("/messages",isLoggedIn, async (req, res) => {
 });
 
 
+// Logout route to destroy session and clear cookies
+app.get("/logout", (req, res) => {
+  req.session.destroy((err) => {
+    if (err) return res.status(500).send("Error logging out");
+    res.clearCookie("connect.sid");
+    res.redirect("/signup");
+  });
+});
+
+
+
+
+
+
+
+
+
+const multer = require("multer");
+const fs = require("fs");
+const PDFDocument = require("pdfkit"); 
+
+// Create uploads directories if they don't exis
+const uploadsDir = path.join(__dirname, "public", "uploads");
+const storiesDir = path.join(__dirname, "public", "stories");
+if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
+if (!fs.existsSync(storiesDir)) fs.mkdirSync(storiesDir, { recursive: true });
+
+// Multer configuration for posts
+const postStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadsDir),
+  filename: (req, file, cb) =>
+    cb(
+      null,
+      `media-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(
+        file.originalname
+      )}`
+    ),
+});
+const uploadPost = multer({
+  storage: postStorage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
+
+// Multer configuration for stories
+const storyStorage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, storiesDir),
+  filename: (req, file, cb) =>
+    cb(
+      null,
+      `story-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(
+        file.originalname
+      )}`
+    ),
+});
+const uploadStory = multer({
+  storage: storyStorage,
+  limits: { fileSize: 30 * 1024 * 1024 },
+});
+
+// MongoDB connection
+mongoose
+  .connect("mongodb://127.0.0.1:27017/legacy_trunk")
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error(err));
+
+// Middleware
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
+
+// Schemas
+const commentSchema = new mongoose.Schema({
+  text: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+});
+
+const itemSchema = new mongoose.Schema({
+  user_id:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  family_id:  { type: mongoose.Schema.Types.ObjectId, ref: "Family" },
+  member_name: String,
+  text: String,
+  description: String,
+  media: [
+    {
+      url: { type: String, required: true },
+      type: { type: String, required: true }, // 'image' or 'video'
+    },
+  ],
+  tags: [String],
+  likes: { type: Number, default: 0 },
+  shares: { type: Number, default: 0 },
+  comments: [commentSchema],
+  createdAt: { type: Date, default: Date.now },
+});
+
+const storySchema = new mongoose.Schema({
+  media: { type: String, required: true },
+  mediaType: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now, expires: 86400 },
+  views: [{ type: Date }],
+});
+
+const tagSchema = new mongoose.Schema({ name: String });
+
+const Item = mongoose.model("Item", itemSchema);
+const Story = mongoose.model("Story", storySchema);
+const Tag = mongoose.model("Tag", tagSchema);
+
+
+
+
+// Add post
+app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
+  const userId = req.user._id;
+  const user = await User.findById(userId);
+  const familyId = user.family_id;
+
+  console.log("Request Body:", req.body);
+  console.log("Uploaded Files:", req.files);
+  try {
+    const {text,description,tags} = req.body || "";
+    const mediaFiles = req.files.map((file) => ({
+      url: `/uploads/${file.filename}`,
+      type: file.mimetype.startsWith("video/") ? "video" : "image",
+    }));
+
+
+    const newItem = await new Item({
+      member_name:user.name,
+      family_id:familyId,
+      user_id:userId,
+      text,
+      media: mediaFiles,
+      tags,
+      description
+    });
+
+    await newItem.save();
+    res.json({ message: "Media added successfully" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" }); 
+  }
+});
+
+//fetch-all-posts
+app.post("/family/fetch-all-posts",isLoggedIn, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    const familyId = user.family_id; 
+    const items = await Item.find({ family_id: familyId }).sort({ createdAt: -1 });
+    console.log("Fetched items:", items);
+    res.json({ items });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+
+
+
+
 
 const PORT = process.env.PORT || 3128;
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));  
+server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
