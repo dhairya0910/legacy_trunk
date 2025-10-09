@@ -13,6 +13,7 @@ import Profile from './pages/Profile';
 import Socket from './api/Socket';
 import InviteMember from './pages/InviteMember';
 import Requests from './pages/Requests';
+import CardExpand from './Components/CardExpand';
 
 function App() {
   return <>
@@ -31,6 +32,8 @@ function App() {
         <Route path="/profile" element={<Profile/>} />
         <Route path="/invite" element={<InviteMember/>} />
         <Route path="/requests" element={<Requests/>} />
+        <Route path="/view/post/:id" element={<CardExpand/>} />
+
 
       </Routes>
     </Router>

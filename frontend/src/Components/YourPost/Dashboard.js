@@ -30,12 +30,12 @@ export default function Dashboard({ post, index, onEdit, onDelete }) {
             <div className="flex items-start justify-between">
               <div className="flex-1">
                 <h3 className="text-xl font-bold text-gray-900 mb-2">
-                  {post.title}
+                  {post.text}
                 </h3>
                 <div className="flex items-center gap-2 text-sm text-gray-500">
                   <Calendar className="w-4 h-4" />
                   <span>
-                    {format(new Date(post.timestamp), "MMM dd, yyyy • hh:mm a")}
+                    {format(new Date(post.createdAt), "MMM dd, yyyy • hh:mm a")}
                   </span>
                 </div>
               </div>
@@ -96,7 +96,7 @@ export default function Dashboard({ post, index, onEdit, onDelete }) {
                 </button>
                 <button
                   onClick={() => {
-                    onDelete(post.id);
+                    onDelete(post._id);
                     setShowDialog(false);
                   }}
                   className="px-4 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700"

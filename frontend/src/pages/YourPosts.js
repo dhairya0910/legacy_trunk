@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Plus, Sparkles } from "lucide-react";
+import { ArrowLeft, Plus, Sparkles } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import PostDialog from "../Components/YourPost/PostDialog";
 import Dashboard from "../Components/YourPost/Dashboard";
@@ -12,21 +12,28 @@ export default function YourPosts() {
 
 
   useEffect(() => {
-    loadPosts();
-  }, []);
+    fetchAllPosts();
+  }, [posts.length]);
 
-  const loadPosts = async () => {
-    setLoading(true);
-    // simulate network delay
-    setTimeout(() => {
-      const storedPosts = JSON.parse(localStorage.getItem("posts") || "[]");
-      // sort by timestamp (descending)
-      const sorted = storedPosts.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      setPosts(sorted);
-      setLoading(false);
-    }, 600);
-  };
+   const fetchAllPosts = async () => {
+      try {
+        const res = await fetch("http://localhost:3128/family/fetch-user-posts", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        });
 
+        const data = await res.json();
+        console.log("Family posts loaded:", data.items);
+        if (res.ok) {
+          setPosts(data.items);
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error("Error fetching members:", error.message);
+      }
+    };
+    
   const handleSave = async (formData) => {
     const stored = JSON.parse(localStorage.getItem("posts") || "[]");
 
@@ -41,14 +48,14 @@ export default function YourPosts() {
     }
 
     setEditingPost(null);
-    loadPosts();
+    fetchAllPosts()
   };
 
   const handleDelete = async (id) => {
     const stored = JSON.parse(localStorage.getItem("posts") || "[]");
     const updated = stored.filter((p) => p.id !== id);
     localStorage.setItem("posts", JSON.stringify(updated));
-    loadPosts();
+    fetchAllPosts()
   };
 
   const openCreateDialog = () => {
@@ -80,8 +87,8 @@ export default function YourPosts() {
               onClick={openCreateDialog}
               className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
             >
-              <Plus className="w-5 h-5 mr-2" />
-              New Post
+              <ArrowLeft className="w-5 h-5 mr-2" />
+              Back to Dashboard
             </button>
           </div>
         </div>
@@ -121,8 +128,9 @@ export default function YourPosts() {
         ) : (
           <AnimatePresence>
             {posts.map((post, index) => (
-              <Dashboard
-                key={post.id}
+            
+                  <Dashboard
+                key={index}
                 post={post}
                 index={index}
                 onEdit={openEditDialog}

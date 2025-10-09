@@ -718,7 +718,50 @@ app.post("/family/fetch-all-posts",isLoggedIn, async (req, res) => {
   }
 });
 
+//fetch-user-post
+app.post("/family/fetch-user-posts",isLoggedIn, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    const familyId = user.family_id; 
+    const items = await Item.find({ user_id:userId }).sort({ createdAt: -1 });
+    console.log("Fetched items:", items);
+    res.json({ items });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
+//fetch-single-post
+app.post("/family/fetch-single-post/:id",isLoggedIn, async (req, res) => {
+  console.log(202)
+  try {
+    const {id} = req.params;
+   
+    const post = await Item.findById(id)
+  
+    res.json({ post });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+//add-comments
+app.post("/comment/:id",isLoggedIn, async (req, res) => {
+  try {
+    
+    const { commentText } = req.body;
+    console.log(30303)
+    await Item.findByIdAndUpdate(req.params.id, {
+      
+      $push: { comments: { text: commentText } },
+    });
+  } catch {
+    res.json({"message":"falied"})
+  }
+});
 
 
 

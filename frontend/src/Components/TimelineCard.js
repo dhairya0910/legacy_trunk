@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { Calendar, Image as ImageIcon, FileText, Video } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const typeIcons = {
   photo: ImageIcon,
@@ -13,9 +14,13 @@ const typeGradients = {
   video: "from-teal-400 to-emerald-500",
   story: "from-lime-400 to-green-500",
   document: "from-green-400 to-teal-500"
+  
 };
-
 export default function TimelineCard({ memory, index, inView }) {
+  const navigator = useNavigate();
+  const cardHandle = (post) =>{
+    navigator(`/view/post/${post._id}`)
+  }
   const Icon = typeIcons[memory.memory_type] || ImageIcon;
   const gradient = typeGradients[memory.memory_type] || "from-green-400 to-emerald-500";
   const isEven = index % 2 === 0;
@@ -31,7 +36,7 @@ export default function TimelineCard({ memory, index, inView }) {
         whileHover={{ scale: 1.02, y: -4 }}
         className={`flex-1 ${isEven ? "lg:text-right" : "lg:text-left"}`}
       >
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300">
+        <div onClick={()=>{cardHandle(memory)}} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300">
           <div className="flex items-start gap-4">
             {memory.image_url && (
               <div className="w-20 h-20 rounded-xl overflow-hidden shadow-md flex-shrink-0">
@@ -43,7 +48,7 @@ export default function TimelineCard({ memory, index, inView }) {
               </div>
             )}
             
-            <div className="flex-1 min-w-0">
+            <div className="flex-1 min-w-0 cursor-pointer">
               <h3 className="font-bold text-gray-800 text-lg mb-1">
                 {memory.text}
               </h3>

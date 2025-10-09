@@ -14,7 +14,7 @@ const mockUploadFile = async (file) => {
 
 export default function PostDialog({ open, onOpenChange, post, onSave }) {
   const [formData, setFormData] = useState({
-    title: "",
+    text: "",
     description: "",
     file_url: "",
     timestamp: new Date().toISOString().slice(0, 16),
@@ -26,7 +26,7 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
   useEffect(() => {
     if (post) {
       setFormData({
-        title: post.title || "",
+        text: post.text || "",
         description: post.description || "",
         file_url: post.file_url || "",
         timestamp: post.timestamp
@@ -38,7 +38,7 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
       }
     } else {
       setFormData({
-        title: "",
+        text: "",
         description: "",
         file_url: "",
         timestamp: new Date().toISOString().slice(0, 16),
@@ -89,29 +89,29 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
           <X className="w-5 h-5" />
         </button>
 
-        {/* Title */}
+        {/* text */}
         <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           {post ? "Edit Post" : "Create New Post"}
         </h2>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Title */}
+          {/* text */}
           <div className="space-y-1">
             <label
-              htmlFor="title"
+              htmlFor="text"
               className="text-sm font-medium text-gray-900"
             >
-              Title
+              text
             </label>
             <input
-              id="title"
+              id="text"
               type="text"
-              value={formData.title}
+              value={formData.text}
               onChange={(e) =>
-                setFormData((prev) => ({ ...prev, title: e.target.value }))
+                setFormData((prev) => ({ ...prev, text: e.target.value }))
               }
-              placeholder="Enter post title"
+              placeholder="Enter post text"
               required
               className="w-full border border-gray-300 rounded-lg px-3 py-2 text-black placeholder-gray-400 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
             />
