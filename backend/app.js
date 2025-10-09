@@ -655,17 +655,16 @@ const itemSchema = new mongoose.Schema({
 });
 
 const storySchema = new mongoose.Schema({
+  user_id:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   media: { type: String, required: true },
   mediaType: { type: String, required: true },
   createdAt: { type: Date, default: Date.now, expires: 86400 },
   views: [{ type: Date }],
 });
 
-const tagSchema = new mongoose.Schema({ name: String });
-
 const Item = mongoose.model("Item", itemSchema);
 const Story = mongoose.model("Story", storySchema);
-const Tag = mongoose.model("Tag", tagSchema);
+
 
 
 
@@ -782,6 +781,35 @@ app.post("/delete-comment/:itemId/:commentId", async (req, res) => {
 
 
 //add-story
+app.post("/upload-story",isLoggedIn, uploadStory.single("storyFile"), async (req, res) => {
+   
+  try {
+    // if (!req.file) return res.redirect("/");
+    
+    await Story.create({ media: `/stories/${req.body.newStory.storyFile.url}`,mediaType:req.body.newStory.storyFile.type,user_id:req.user._id });
+    res.json({"msg":"200"})
+  } catch (err) {
+   res.json({"msg":"500"})
+  }
+});
+
+//fetch-stories
+app.post('/:who/fetch-stories',isLoggedIn,async(req,res)=>{
+  const Id = req.user._id
+  const {who} = req.params;
+  if(who!=="user") Id = req.params;
+  try {
+    const stories = await Story.find({ user_id: Id })
+        .sort({ createdAt: 1 })
+
+        res.json({stories})
+    
+  } catch (error) {
+    res.json({error})
+  }
+
+
+})
 
 
 

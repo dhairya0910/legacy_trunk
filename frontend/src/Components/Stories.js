@@ -4,21 +4,36 @@ import { Helmet } from "react-helmet";
 
 export default function StatusViewer() {
   const navigate = useNavigate();
-
-  // 🔹 Dummy stories
-  const stories = [
+  const dummy = [
     { url: "https://picsum.photos/id/1011/600/800" },
     { url: "https://picsum.photos/id/1012/600/800" },
     { url: "https://picsum.photos/id/1015/600/800" },
   ];
+  const [stories, setStories] = useState(dummy)
+  // 🔹 Dummy stories
 
   const [currentIndex, setCurrentIndex] = useState(0);
   const [progress, setProgress] = useState(0);
   const intervalRef = useRef(null);
 
+
+
+  const fetchStories = async () =>{
+      // Simulate upload delay
+     const res = await fetch(`http://localhost:3128/user/fetch-stories/`, {
+       method: "POST",
+       credentials: "include",
+       headers: { "Content-Type": "application/json" },
+     });
+     const data = await res.json();
+     setStories(data.stories)
+     
+  }
+
   // Start auto progress when story changes
   useEffect(() => {
     startProgress();
+    fetchStories();
     return () => clearInterval(intervalRef.current);
   }, [currentIndex]);
 
@@ -80,7 +95,7 @@ export default function StatusViewer() {
 
       {/* Story image */}
       <img
-        src={stories[currentIndex].url}
+        src={stories[currentIndex].media}
         alt="status"
         className="w-full max-w-md h-[80vh] object-cover rounded-lg"
       />

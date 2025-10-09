@@ -1,18 +1,15 @@
-
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Upload, Users } from "lucide-react";
-// Removed entity and integration imports for self-contained dummy data
+import config from "../config";
 
 export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMembers }) {
   const [formData, setFormData] = useState({
     title: "",
     selectedContacts: []
   });
-  const [file, setFile] = useState(null);
+  const [file, setFile] = useState([]); // ✅ Now supports multiple files
   const [isUploading, setIsUploading] = useState(false);
-
-  // Removed useEffect for loading family members as they are now passed as a prop
 
   const handleContactToggle = (memberId) => {
     setFormData(prev => ({
@@ -25,16 +22,19 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (!file.length) return;
+
     setIsUploading(true);
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    
+   
 
-      // Simulate image upload result
-      const image_url = file
-        ? "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400"
-        : "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400"; // Dummy URL, required for story
+      // Simulate uploaded URLs (use backend response in real case)
+      const uploadedFiles = file.map((f) => ({
+        url: URL.createObjectURL(f),
+        type: f.type.startsWith("video/") ? "video" : "image"
+      }));
 
       const selectedNames = familyMembers
         .filter(m => formData.selectedContacts.includes(m.id))
@@ -42,31 +42,37 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
         .join(", ");
 
       const newStory = {
-        id: Math.random().toString(36).substring(2, 9), // Generate a dummy ID
+        id: Math.random().toString(36).substring(2, 9),
         title: formData.title,
         description: `Shared with: ${selectedNames || "Everyone"}`,
-        image_url,
-        memory_type: "story",
+        storyFile: uploadedFiles[0],
+        mediaType: uploadedFiles[0].type,
         upload_date: new Date().toISOString()
       };
-
-      // Call onSuccess with the new story object
       onSuccess(newStory);
+
+        // Simulate upload delay
+     const res = await fetch(`http://localhost:3128/upload-story`, {
+       method: "POST",
+       credentials: "include",
+       body:JSON.stringify({newStory}),
+       headers: { "Content-Type": "application/json" },
+       
+     });
+     if(res.ok) alert("Story added")
+
+      console.log(newStory)
       handleClose();
     } catch (error) {
       console.error("Error uploading story (simulated):", error);
-      // Optionally, add an error state or notification
     } finally {
       setIsUploading(false);
     }
   };
 
   const handleClose = () => {
-    setFormData({
-      title: "",
-      selectedContacts: []
-    });
-    setFile(null);
+    setFormData({ title: "", selectedContacts: [] });
+    setFile([]);
     onClose();
   };
 
@@ -89,6 +95,7 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+              {/* Header */}
               <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-lime-50 to-emerald-50">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl font-bold text-gray-800">Upload Story</h2>
@@ -101,33 +108,62 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                 </div>
               </div>
 
+              {/* Form */}
               <form onSubmit={handleSubmit} className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
                 <div className="space-y-6">
-                  {/* Upload Photo */}
+
+                  {/* Upload Photos/Videos */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                       <Upload className="w-4 h-4 text-lime-600" />
-                      Upload Photo *
+                      Upload Photos/Videos *
                     </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-lime-400 transition-all bg-gradient-to-br from-lime-50/50 to-emerald-50/50">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/*,video/*"
+                        multiple
                         required
-                        onChange={(e) => setFile(e.target.files[0])}
+                        onChange={(e) => setFile(Array.from(e.target.files))}
                         className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-lime-50 file:text-lime-700 hover:file:bg-lime-100 cursor-pointer"
                       />
-                      {file && (
-                        <div className="mt-4">
-                          <p className="text-sm text-lime-600 font-medium">
-                            Selected: {file.name}
+
+                      {file && file.length > 0 && (
+                        <div className="mt-4 space-y-2">
+                          <p className="text-sm font-medium text-lime-600 mb-2">
+                            Selected Files:
                           </p>
+                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            {file.map((f, index) => (
+                              <div
+                                key={index}
+                                className="relative group border rounded-xl overflow-hidden bg-white shadow-sm"
+                              >
+                                {f.type.startsWith("image/") ? (
+                                  <img
+                                    src={URL.createObjectURL(f)}
+                                    alt={f.name}
+                                    className="w-full h-28 object-cover"
+                                  />
+                                ) : (
+                                  <video
+                                    src={URL.createObjectURL(f)}
+                                    className="w-full h-28 object-cover"
+                                    controls
+                                  />
+                                )}
+                                <div className="absolute bottom-0 bg-black/50 text-white text-xs p-1 w-full truncate text-center">
+                                  {f.name}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
                         </div>
                       )}
                     </div>
                   </div>
 
-                  {/* Title */}
+                  {/* Story Title */}
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Story Title *
@@ -136,7 +172,9 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                       type="text"
                       required
                       value={formData.title}
-                      onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
                       placeholder="What's your story about?"
                       className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-lime-400 focus:border-transparent transition-all"
                     />
@@ -153,7 +191,9 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                     </p>
                     <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-xl p-4">
                       {familyMembers.length === 0 ? (
-                        <p className="text-sm text-gray-500 text-center py-4">No family members available.</p>
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          No family members available.
+                        </p>
                       ) : (
                         familyMembers.map((member) => (
                           <label
@@ -175,7 +215,9 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                               <p className="font-medium text-gray-800 group-hover:text-lime-600 transition-colors">
                                 {member.name}
                               </p>
-                              <p className="text-sm text-gray-500">{member.status || "Available"}</p>
+                              <p className="text-sm text-gray-500">
+                                {member.status || "Available"}
+                              </p>
                             </div>
                           </label>
                         ))
@@ -189,6 +231,7 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                   </div>
                 </div>
 
+                {/* Buttons */}
                 <div className="mt-8 flex gap-3">
                   <button
                     type="button"
