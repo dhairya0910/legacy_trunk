@@ -9,24 +9,23 @@ export default function PostDetails() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
 
-  useEffect(() => {
-    const fetchPost = async () => {
-      try {
-        const res = await fetch(`http://localhost:3128/family/fetch-single-post/${id}`, {
-          method: "POST",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        });
-        const data = await res.json();
-        if (res.ok) {
-          setPost(data.post);
-          setComments([...comments,...data.post.comments])
-        }
-      } catch (error) {
-        console.error("Failed to fetch post:", error);
+  const fetchPost = async () => {
+    try {
+      const res = await fetch(`http://localhost:3128/family/fetch-single-post/${id}`, {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPost(data.post);
+        setComments([...comments,...data.post.comments])
       }
-    };
-
+    } catch (error) {
+      console.error("Failed to fetch post:", error);
+    }
+  };
+  useEffect(() => {
     fetchPost();
   }, []);
 
@@ -48,10 +47,27 @@ export default function PostDetails() {
     e.preventDefault();
     if (!newComment.trim()) return;
     sendComment()
-    console.log(newComment)
-    setComments([...comments, newComment]);
+    setComments([...comments,newComment])
     setNewComment("");
   };
+
+  const handleDelete = async (commentId) =>{
+     try {
+     const res = await fetch(`http://localhost:3128/delete-comment/${id}/${commentId}`, {
+       method: "POST",
+       credentials: "include",
+       headers: { "Content-Type": "application/json" },
+       
+     });
+     if(res.ok){
+        window.location.reload();
+     };
+     
+   } catch (error) {
+     console.error("Failed to fetch post:", error);
+   }
+
+  }
 
   if (!post) {
     return <p>Loading post...</p>;
@@ -60,6 +76,7 @@ export default function PostDetails() {
   return (
     <div className="text-black max-w-xl mx-auto mt-10 p-4 border rounded-lg shadow">
       <h1 className="text-2xl font-bold mb-2">{post.text || "Untitled Post"}</h1>
+      <p>posted by: <b className="text-sm italic">{post.member_name}</b></p>
       <p className="text-gray-600 text-sm mb-4">{new Date(post.createdAt).toLocaleDateString()}</p>
 
       {post.media && (
@@ -96,9 +113,10 @@ export default function PostDetails() {
         ) : (
           <ul className="space-y-2">
             {comments.map((comment, index) => (
-              <li key={index} className="bg-gray-100 p-2 rounded">
-                {comment.text||comment}
+              <li key={index} className="bg-gray-100 p-2 rounded text-black">
+                {comment.text||comment} <span className="float-right text-red-700 cursor-pointer" onClick={()=>handleDelete(comment._id)}>delete</span><p className="text-[.8rem] text-gray-500 my-1">~{comment.name||"YOU"}</p>
               </li>
+       
             ))}
           </ul>
         )}

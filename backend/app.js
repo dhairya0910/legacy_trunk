@@ -631,13 +631,14 @@ app.use(express.static(path.join(__dirname, "public")));
 // Schemas
 const commentSchema = new mongoose.Schema({
   text: { type: String, required: true },
+  name:{ type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
 const itemSchema = new mongoose.Schema({
   user_id:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   family_id:  { type: mongoose.Schema.Types.ObjectId, ref: "Family" },
-  member_name: String,
+  name: String,
   text: String,
   description: String,
   media: [
@@ -751,17 +752,37 @@ app.post("/family/fetch-single-post/:id",isLoggedIn, async (req, res) => {
 //add-comments
 app.post("/comment/:id",isLoggedIn, async (req, res) => {
   try {
-    
+    const userId = req.user._id;
+    const user = await User.findOne({_id:userId});
+   
     const { commentText } = req.body;
-    console.log(30303)
+
     await Item.findByIdAndUpdate(req.params.id, {
       
-      $push: { comments: { text: commentText } },
+      $push: { comments: { text: commentText,name:user.name } },
     });
   } catch {
     res.json({"message":"falied"})
   }
 });
+
+//delete comment
+app.post("/delete-comment/:itemId/:commentId", async (req, res) => {
+ 
+  try {
+    await Item.findByIdAndUpdate(req.params.itemId, {
+      $pull: { comments: { _id: req.params.commentId } },
+    });
+   res.json({"msg":"successfully"})
+  } catch {
+    
+    res.json({"msg":"unsuccesfull"})
+  }
+});
+
+
+//add-story
+
 
 
 
