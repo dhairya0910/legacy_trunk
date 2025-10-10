@@ -809,8 +809,14 @@ app.post("/add-story",isLoggedIn, uploadStory.single("storyFile"), async (req, r
 app.get("/get-stories/:userId", async (req, res) => {
  
   const { userId } = req.params;
-  const stories = await Story.find({ user_id:userId });
-  res.json({ stories });
+  try{
+
+    const stories = await Story.find({ user_id:userId });
+    res.json({ stories });
+  }
+  catch(err){
+    console.log(err)
+  }
 });
 
 
@@ -835,7 +841,7 @@ app.post('/:who/fetch-stories',isLoggedIn,async(req,res)=>{
 
 
 
-
+//check auth for frontend
 app.post("/check-auth", isLoggedIn, (req, res) => {
   const authenticated = Boolean(req.user?._id)
   console.log(authenticated)
@@ -843,6 +849,19 @@ app.post("/check-auth", isLoggedIn, (req, res) => {
 });
 
 
+
+
+// Delete post
+app.post("/delete/post/:id",isLoggedIn, async (req, res) => {
+  // const {id} = req.params
+  console.log(req.params.id)
+  try {
+    await Item.findByIdAndDelete(req.params.id);
+    res.json({"msg":"Delete Success"});
+  } catch {
+    res.json({"msg":"Delete failed"});
+  }
+});
 
 
 

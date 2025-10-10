@@ -11,6 +11,7 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
   const navigate = useNavigate();
   const fetchMembersStatus = async()=>{
     for(let member of members){
+      if(member.id == 1) return //This I will check later why id is showing 1 in starting and causes error in mongodb
     
      try {
           const res = await fetch(`${config.BACKEND_URL}/get-stories/${member.id}`);
