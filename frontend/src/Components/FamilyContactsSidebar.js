@@ -1,8 +1,42 @@
 import React from "react";
 import { motion } from "framer-motion";
 import { Users, MessageCircle, X } from "lucide-react";
-
+import { useEffect } from "react";
+import config from "../config";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 export default function FamilyContactsSidebar({ familyName,members, onContactClick, isOpen, onClose }) {
+  const [storiesData,setStoriesData] = useState([])
+  const pushStory = [];
+  const navigate = useNavigate();
+  const fetchMembersStatus = async()=>{
+    for(let member of members){
+    
+     try {
+          const res = await fetch(`${config.BACKEND_URL}/get-stories/${member.id}`);
+          const data = await res.json();
+          pushStory.push({stories:data.stories||[]})
+          console.log(storiesData)
+        
+        } catch (err) {
+          console.error("Error fetching for:", member._id, err);
+          
+        }
+    }
+  }
+
+
+  const checkStatus = (id) =>{
+    navigate(`/${id}/view-stories`)
+  }
+
+  useEffect( () => {
+    fetchMembersStatus();
+    setStoriesData(pushStory)
+  }, [members])
+  
+
+
   return (
     <>
       {isOpen && (
@@ -52,7 +86,14 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50 cursor-pointer transition-all duration-200 group"
               >
                 <div className="relative">
-                  <div className="w-14 h-14 bg-gradient-to-tr from-[#544364] to-pink-100 shadow-[0_20px_50px_rgba(236,72,153,0.4)] rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md">
+                  <div onClick={()=>checkStatus(member.id)} className="w-14 h-14 bg-gradient-to-tr from-[#544364] to-pink-100 shadow-[0_20px_50px_rgba(236,72,153,0.4)] rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md"style={{
+            
+            boxShadow:
+              storiesData[index]?.stories?.length > 0
+                ? "0px 0px 10px #450081 "
+                : "2px solid transparent",
+           
+          }}>
                     {member.avatar_url ? (
                       <img
                         src={member.avatar_url}
@@ -72,9 +113,7 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
                   <h3 className="font-semibold text-gray-800 truncate group-hover:text-emerald-600 transition-colors">
                     {member.name}
                   </h3>
-                  <p className="text-sm text-gray-500 truncate">
-                    {member.status || member.last_seen || "Available"}
-                  </p>
+                 
                 </div>
 
                 <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition-colors" />

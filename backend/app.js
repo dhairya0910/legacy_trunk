@@ -557,12 +557,11 @@ app.post("/messages",isLoggedIn, async (req, res) => {
 
 
 // Logout route to destroy session and clear cookies
-app.get("/logout", (req, res) => {
-  req.session.destroy((err) => {
-    if (err) return res.status(500).send("Error logging out");
+app.post("/logout", (req, res) => {
+  // console.log(req.cookies)
     res.clearCookie("connect.sid");
-    res.redirect("/signup");
-  });
+    res.clearCookie("authToken");
+    // res.redirect("/signup");
 });
 
 
@@ -658,6 +657,7 @@ const itemSchema = new mongoose.Schema({
 });
 
 const storySchema = new mongoose.Schema({
+  title:String,
   user_id:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   media: { type: String, required: true },
   mediaType: { type: String, required: true },
@@ -784,37 +784,57 @@ app.post("/delete-comment/:itemId/:commentId", async (req, res) => {
 });
 
 
-//add-story
-app.post("/upload-story",isLoggedIn, uploadStory.single("storyFile"), async (req, res) => {
-   
+
+// Add story
+app.post("/add-story",isLoggedIn, uploadStory.single("storyFile"), async (req, res) => {
+  const userId = req.user._id;
   try {
-    console.log(req.body,req,files)
-    // if (!req.file) return res.redirect("/");
-    
-    await Story.create({ media: `/stories/${req.body.newStory.storyFile.url}`,mediaType:req.body.newStory.storyFile.type,user_id:req.user._id });
-    res.json({"msg":"200"})
+    const mediaType = req.file.mimetype.startsWith("video/") ? "video" : "image";
+    await Story.create({ media: req.file.path, mediaType,user_id:userId,title:req.body.title });
+   res.json({"msg":"ok"})
   } catch (err) {
-   res.json({"msg":"500"})
+    console.error(err);
+   res.json({"msg":"bad"})
   }
 });
 
+
+// get-stories
+app.get("/get-stories/:userId", async (req, res) => {
+ 
+  const { userId } = req.params;
+  const stories = await Story.find({ user_id:userId });
+  res.json({ stories });
+});
+
+
 //fetch-stories
 app.post('/:who/fetch-stories',isLoggedIn,async(req,res)=>{
-  const Id = req.user._id
+  let Id = req.user._id
   const {who} = req.params;
-  if(who!=="user") Id = req.params;
+  
+  if(who!=="user") Id = who;
   try {
     const stories = await Story.find({ user_id: Id })
         .sort({ createdAt: 1 })
-
+        
         res.json({stories})
-    
+
   } catch (error) {
     res.json({error})
   }
 
 
 })
+
+
+
+
+app.post("/check-auth", isLoggedIn, (req, res) => {
+  const authenticated = Boolean(req.user?._id)
+  console.log(authenticated)
+  res.json({ authenticated, user: req.user?._id });
+});
 
 
 

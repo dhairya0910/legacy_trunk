@@ -20,55 +20,49 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
     }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!file.length) return;
+ const handleSubmit = async (e) => {
+  e.preventDefault();
+  if (!file.length) return;
 
-    setIsUploading(true);
+  setIsUploading(true);
 
-    try {
-    
-   
+  try {
+    // Create FormData for multipart/form-data request
+    const formDataToSend = new FormData();
 
-      // Simulate uploaded URLs (use backend response in real case)
-      const uploadedFiles = file.map((f) => ({
-        url: URL.createObjectURL(f),
-        type: f.type.startsWith("video/") ? "video" : "image"
-      }));
+    // Append first file (backend currently expects single file "storyFile")
+    formDataToSend.append("storyFile", file[0]);
 
-      const selectedNames = familyMembers
-        .filter(m => formData.selectedContacts.includes(m.id))
-        .map(m => m.name)
-        .join(", ");
+    // You can also send title or other info if you want
+    formDataToSend.append("title", formData.title);
+    formDataToSend.append(
+      "selectedContacts",
+      JSON.stringify(formData.selectedContacts)
+    );
 
-      const newStory = {
-        id: Math.random().toString(36).substring(2, 9),
-        title: formData.title,
-        description: `Shared with: ${selectedNames || "Everyone"}`,
-        storyFile: uploadedFiles[0],
-        mediaType: uploadedFiles[0].type,
-        upload_date: new Date().toISOString()
-      };
-      onSuccess(newStory);
+    // Send request as multipart/form-data
+    const res = await fetch(`http://localhost:3128/add-story`, {
+      method: "POST",
+      credentials: "include",
+      body: formDataToSend, //  send FormData, not JSON
+    });
 
-        // Simulate upload delay
-     const res = await fetch(`http://localhost:3128/upload-story`, {
-       method: "POST",
-       credentials: "include",
-       body:JSON.stringify({newStory}),
-       headers: { "Content-Type": "application/json" },
-       
-     });
-     if(res.ok) alert("Story added")
-
-      console.log(newStory)
+    if (res.ok) {
+      alert("Story added successfully");
       handleClose();
-    } catch (error) {
-      console.error("Error uploading story (simulated):", error);
-    } finally {
-      setIsUploading(false);
+    } else {
+      const errData = await res.text();
+      console.error("Upload failed:", errData);
+      alert("Failed to upload story");
     }
-  };
+  } catch (error) {
+    console.error("Error uploading story:", error);
+    alert("Something went wrong while uploading");
+  } finally {
+    setIsUploading(false);
+  }
+};
+
 
   const handleClose = () => {
     setFormData({ title: "", selectedContacts: [] });

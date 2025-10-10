@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
-import { useEffectEvent } from "react";
-import { p } from "motion/react-client";
+import { useParams } from "react-router-dom";
 
 export default function StatusViewer() {
   const navigate = useNavigate();
+   const { who } = useParams(); // gets value from /user/:id
+   
   const dummy = [
     { media: "https://picsum.photos/id/1011/600/800" },
     { media: "https://picsum.photos/id/1012/600/800" },
@@ -23,7 +24,7 @@ export default function StatusViewer() {
 
   const fetchStories = async () =>{
       // Simulate upload delay
-     const res = await fetch(`http://localhost:3128/user/fetch-stories/`, {
+     const res = await fetch(`http://localhost:3128/${who}/fetch-stories/`, {
        method: "POST",
        credentials: "include",
        headers: { "Content-Type": "application/json" },
@@ -104,6 +105,7 @@ export default function StatusViewer() {
       </div>
 
       {/* Story image */}
+      <p className="float-left w-100 text-white">{stories[currentIndex].title}</p>
       {stories && <img
         src={stories[currentIndex]?.media}
         alt="status"

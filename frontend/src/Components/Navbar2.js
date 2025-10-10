@@ -25,7 +25,7 @@ export default function Navbar2() {
     }
   };
   const viewStories = ()=>{
-    navigator("/view-stories")
+    navigator("/user/view-stories")
 
   }
   const viewPosts = ()=>{

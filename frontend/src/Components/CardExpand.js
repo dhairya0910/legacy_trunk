@@ -84,13 +84,13 @@ export default function PostDetails() {
           {post.media.type === "video" ? (
             <video controls src={post.media.url} className="w-full rounded" />
           ) : (
-            <img src={post.media.url} alt="Post Media" className="w-full rounded" />
+            <img src={post.media[0].url} alt="Post Media" className="w-full rounded" />
           )}
         </div>
       )}
-
+      <p className="italic">Description:</p>
       {post.description && (
-        <p className="text-gray-800 mb-4 whitespace-pre-line">{post.description}</p>
+        <p className="text-gray-800 mb-4 whitespace-pre-line">&nbsp;&nbsp;{post.description}</p>
       )}
 
       {post.author && (
@@ -98,12 +98,12 @@ export default function PostDetails() {
       )}
 
       <div className="mb-6">
-        <button
+        {/* <button
           onClick={handleLike}
           className={`px-4 py-2 rounded ${liked ? "bg-blue-500 text-white" : "bg-gray-200"}`}
         >
           {liked ? "Liked" : "Like"}
-        </button>
+        </button> */}
       </div>
 
       <div className="mb-4">
@@ -114,7 +114,7 @@ export default function PostDetails() {
           <ul className="space-y-2">
             {comments.map((comment, index) => (
               <li key={index} className="bg-gray-100 p-2 rounded text-black">
-                {comment.text||comment} <span className="float-right text-red-700 cursor-pointer" onClick={()=>handleDelete(comment._id)}>delete</span><p className="text-[.8rem] text-gray-500 my-1">~{comment.name||"YOU"}</p>
+                {comment.text||comment} <span className="float-right text-red-700 cursor-pointer" onClick={()=>handleDelete(comment._id)}>{comment.name?<p>delete</p>:''}</span><p className="text-[.8rem] text-gray-500 my-1">~{comment.name||"YOU"}</p>
               </li>
        
             ))}
