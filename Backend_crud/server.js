@@ -107,7 +107,7 @@ app.get("/", async (req, res) => {
 });
 
 // Add post
-app.post("/add-media", uploadPost.array("files", 10), async (req, res) => {
+app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
   try {
     const text = req.body.item || "";
     const mediaFiles = req.files.map((file) => ({
