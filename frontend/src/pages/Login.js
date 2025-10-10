@@ -16,7 +16,7 @@ export default function Signup() {
       <form className="container1">
         <div className="form">
           <h3 className="tag">
-            Signup to <span className="title">GHARONDHA</span>
+            Login to <span className="title">GHARONDHA</span>
           </h3>
 
           <div className="flex justify-evenly gap-6 my-7">
@@ -49,7 +49,7 @@ export default function Signup() {
 
           <p className="new">
             Existing user?{" "}
-            <Link to="/login" style={{ color: "#78dbff" }}>
+            <Link to="/signup" style={{ color: "#78dbff" }}>
               Click here
             </Link>
           </p>

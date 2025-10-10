@@ -4,26 +4,45 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Navigate, useNavigate } from "react-router-dom";
 export default function Navbar2() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [user, setUser] = useState(null);
   const navigator = useNavigate();
+  const dummyUser = {
+    name: "John Doe",
+    email: "johndoe@example.com",
+    avatar_url: "https://i.pravatar.cc/150?img=3", // random avatar
+  };
+  const [user, setUser] = useState(dummyUser);
 
-  useEffect(() => {
-    loadUser();
-  }, []);
 
-  //load dummy data
-  const loadUser = async () => {
+
+
+
+  const fetchUser = async () => {
     try {
-      const dummyUser = {
-        full_name: "John Doe",
-        email: "johndoe@example.com",
-        avatar_url: "https://i.pravatar.cc/150?img=3", // random avatar
-      };
-      setUser(dummyUser);
+      const res = await fetch("http://localhost:3128/", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setUser(data)
+       
+       
+        console.log("User verified successfully");
+      }
     } catch (error) {
-      console.log("Failed to load user");
+      console.error("User verification failed:", error.message);
     }
   };
+ 
+  useEffect(() => {
+    
+    // loadUser();
+    fetchUser();
+  }, []);
+
+
   const viewStories = ()=>{
     navigator("/user/view-stories")
 
@@ -79,17 +98,13 @@ export default function Navbar2() {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-2 p-2 rounded-full hover:bg-white/50 transition-all duration-200"
             >
-              {user?.avatar_url ? (
+              {
                 <img
-                  src={user.avatar_url}
+                  src="https://icons.veryicon.com/png/o/miscellaneous/standard/avatar-15.png"
                   alt="User Avatar"
                   className="w-10 h-10 rounded-full shadow-md"
                 />
-              ) : (
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md">
-                  <UserCircle className="w-6 h-6 text-white" />
-                </div>
-              )}
+             }
             </motion.button>
 
             <AnimatePresence>
@@ -103,10 +118,10 @@ export default function Navbar2() {
                 >
                   <div className="p-4 border-b border-gray-100 bg-gradient-to-br from-emerald-50 to-green-50">
                     <p className="font-semibold text-gray-800">
-                      {user?.full_name || "Guest"}
+                      {user?.name || "Guest"}
                     </p>
                     <p className="text-sm text-gray-500">
-                      {user?.email || ""}
+                      {user?.username || ""}
                     </p>
                   </div>
 

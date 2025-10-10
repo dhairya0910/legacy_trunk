@@ -63,6 +63,7 @@ export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
         body: formDataToSend,
         credentials: "include"
       });
+      const urlImage = await res.json();
 
       if (res.ok) {
         const formDataObj = Object.fromEntries(formDataToSend.entries());
@@ -71,9 +72,8 @@ export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
 
         onSuccess({
           ...formDataObj,
-          image_url: file ? URL.createObjectURL(file) : null,
-          memory_type: "photo",
-          tags: formData.tags.join(", ")
+          tags: formData.tags.join(", "),
+          media:urlImage.media
         });
 
         handleClose();
@@ -111,7 +111,7 @@ export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             className="fixed inset-0 z-50 flex items-center justify-center p-4"
           >
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden text-black">
               {/* Header */}
               <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-green-50">
                 <div className="flex items-center justify-between">
@@ -218,10 +218,11 @@ export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                       <Upload className="w-4 h-4 text-emerald-600" />
-                      Upload Photo (Optional)
+                      Upload Photo*
                     </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-emerald-400 transition-all">
                       <input
+                      required
                         type="file"
                         onChange={(e) => setFile(e.target.files[0])}
                         className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"

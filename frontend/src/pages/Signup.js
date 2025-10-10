@@ -7,39 +7,13 @@ import insta from "../assets/Images/insta.svg";
 import fb from "../assets/Images/fb.svg";
 
 export default function Signup() {
-  const [form, setForm] = useState(null);
-
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    console.log(form);
-    try {
-      const res = await fetch(`${config.APP_URL}/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify(form),
-      });
-
-      if (!res.ok) {
-        console.log("Login failed");
-        throw new Error("Login failed");
-      } else {
-        console.log("Login successful");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-  };
-
+  
+ const handleGoogle = () => {
+    window.open(`${config.BACKEND_URL}/auth/google`, "_self");
+  }
   return (
     <>
-      <form className="container1" onSubmit={handleSubmit}>
+      <form className="container1">
         <div className="form">
           <h3 className="tag">
             Signup to <span className="title">GHARONDHA</span>
@@ -50,6 +24,7 @@ export default function Signup() {
               <img
                 src={google}
                 alt="Google"
+                onClick={handleGoogle}
                 className="h-10 rounded-3xl w-10"
                 id="google"
               />

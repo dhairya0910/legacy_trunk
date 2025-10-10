@@ -66,22 +66,22 @@ export default function TimelineCard({ memory, index, inView }) {
               <h3 className="font-bold text-gray-800 text-lg mb-1">
                 {memory.text}
               </h3>
-              <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-               {memory.description?.replace(/^(.{10}).*$/, "$1...")}
+              <p className="text-gray-600 text-sm mb-3 line-clamp-2 ltr">
+               {memory.description?.replace(/^(.{40}).*$/, "$1...")}
 
               </p>
               
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+              <div className="flex-col items-center gap-4 text-[.8rem] text-gray-500">
                 <div className="flex items-center gap-1">
-                  <Calendar className="w-3 h-3" />
+                  <Calendar className="w-3 h-3 text-sm" />
                 {new Date(memory.createdAt).toLocaleString("en-IN", { weekday: "short", year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit", hour12: true })}
 
                 </div>
-                {memory.member_name && (
-                  <span className="text-emerald-600 font-medium">
-                    by {memory.member_name}
+                {
+                  <span className="text-emerald-600 font-medium float-right">
+                    by {memory.member_name||"You"}
                   </span>
-                )}
+                }
               </div>
             </div>
           </div>

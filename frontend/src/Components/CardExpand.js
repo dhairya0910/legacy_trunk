@@ -74,7 +74,7 @@ export default function PostDetails() {
   }
 
   return (
-    <div className="text-black max-w-xl mx-auto mt-10 p-4 border rounded-lg shadow">
+    <div className="text-black max-w-xl mx-auto mt-10 p-10 border rounded-lg shadow">
       <h1 className="text-2xl font-bold mb-2">{post.text || "Untitled Post"}</h1>
       <p>posted by: <b className="text-sm italic">{post.member_name}</b></p>
       <p className="text-gray-600 text-sm mb-4">{new Date(post.createdAt).toLocaleDateString()}</p>
@@ -90,7 +90,7 @@ export default function PostDetails() {
       )}
       <p className="italic">Description:</p>
       {post.description && (
-        <p className="text-gray-800 mb-4 whitespace-pre-line">&nbsp;&nbsp;{post.description}</p>
+        <p className="text-gray-800 mb-4 max-w-[40vw] break-words text-left">{post.description}</p>
       )}
 
       {post.author && (

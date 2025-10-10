@@ -27,16 +27,7 @@ const dummyMemories = [
     family_member: "Mummy",
     created_date: "2024-11-12T18:30:00Z",
   },
-  {
-    id: 2,
-    title: "Grandma's 75th Birthday",
-    description: "A day filled with love, laughter, and lots of sweets.",
-    upload_date: "2024-10-20T14:00:00Z",
-    image_url: "https://images.unsplash.com/photo-1558636508-e0db3814bd1d?w=400",
-    memory_type: "photo",
-    family_member: "Papa",
-    created_date: "2024-10-20T14:00:00Z",
-  },
+  
 ];
 
 export default function Dashboard() {

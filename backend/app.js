@@ -127,6 +127,7 @@ app.post("/", isLoggedIn, async (req, res) => {
     const family = await Family.findById(user.family_id);
 
     res.json({
+      name:user.name,
       username: user.username,
       isAdmin: adminFamilies.length > 0,
       adminFamilies,
@@ -558,10 +559,15 @@ app.post("/messages",isLoggedIn, async (req, res) => {
 
 // Logout route to destroy session and clear cookies
 app.post("/logout", (req, res) => {
-  // console.log(req.cookies)
-    res.clearCookie("connect.sid");
-    res.clearCookie("authToken");
-    // res.redirect("/signup");
+  console.log("logout")
+  res.clearCookie("authToken",{
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  res.clearCookie("connect.sid")
+  res.json({"msg":"logout done!!"})
 });
 
 
@@ -700,7 +706,7 @@ app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res
     });
 
     await newItem.save();
-    res.json({ message: "Media added successfully" });
+    res.json({ message: "Media added successfully",media:mediaFiles });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Server error" }); 
