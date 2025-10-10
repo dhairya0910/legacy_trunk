@@ -1,15 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
+import { useEffectEvent } from "react";
+import { p } from "motion/react-client";
 
 export default function StatusViewer() {
   const navigate = useNavigate();
   const dummy = [
-    { url: "https://picsum.photos/id/1011/600/800" },
-    { url: "https://picsum.photos/id/1012/600/800" },
-    { url: "https://picsum.photos/id/1015/600/800" },
+    { media: "https://picsum.photos/id/1011/600/800" },
+    { media: "https://picsum.photos/id/1012/600/800" },
+    { media: "https://picsum.photos/id/1015/600/800" },
   ];
-  const [stories, setStories] = useState(dummy)
+  const [stories,setStories] = useState(false)
+
   // 🔹 Dummy stories
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -26,14 +29,20 @@ export default function StatusViewer() {
        headers: { "Content-Type": "application/json" },
      });
      const data = await res.json();
-     setStories(data.stories)
-     
+     if(data.stories.length) setStories(data.stories)
+     console.log(Boolean(stories))
   }
+
+  useEffect(() => {
+        fetchStories();
+        
+  }, [])
+  
 
   // Start auto progress when story changes
   useEffect(() => {
     startProgress();
-    fetchStories();
+
     return () => clearInterval(intervalRef.current);
   }, [currentIndex]);
 
@@ -68,12 +77,13 @@ export default function StatusViewer() {
 
   return (
     <>
+
     <Helmet>
                 <title>Stories</title>
                 <meta name="description" content="View stories" />
               </Helmet>
 
-    <div className="fixed inset-0 flex flex-col items-center justify-center bg-black text-white">
+    {(stories) && <div className="fixed inset-0 flex flex-col items-center justify-center bg-black text-white">
       {/* Progress bars */}
       <div className="absolute top-2 left-0 right-0 flex gap-1 px-3">
         {stories.map((_, i) => (
@@ -94,11 +104,11 @@ export default function StatusViewer() {
       </div>
 
       {/* Story image */}
-      <img
-        src={stories[currentIndex].media}
+      {stories && <img
+        src={stories[currentIndex]?.media}
         alt="status"
         className="w-full max-w-md h-[80vh] object-cover rounded-lg"
-      />
+      />}
 
       {/* Manual controls */}
       <div className="flex gap-4 mt-4">
@@ -117,7 +127,8 @@ export default function StatusViewer() {
           {currentIndex === stories.length - 1 ? "Finish" : "Next"}
         </button>
       </div>
-    </div>
+    </div>}
+    {(!stories) && <p><b className="text-center block text-black">You don't have any story!!</b></p>}
         </>
   );
 }

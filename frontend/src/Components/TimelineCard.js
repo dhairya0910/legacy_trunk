@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Calendar, Image as ImageIcon, FileText, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 
 const typeIcons = {
   photo: ImageIcon,
@@ -18,12 +19,25 @@ const typeGradients = {
 };
 export default function TimelineCard({ memory, index, inView }) {
   const navigator = useNavigate();
+  const [imgLink, setImgLink] = useState({url:""})
+  
   const cardHandle = (post) =>{
     navigator(`/view/post/${post._id}`)
   }
   const Icon = typeIcons[memory.memory_type] || ImageIcon;
   const gradient = typeGradients[memory.memory_type] || "from-green-400 to-emerald-500";
   const isEven = index % 2 === 0;
+
+  //load the image
+  useEffect(() => {
+  if (memory?.media?.length > 0) {
+    setImgLink(memory.media[0].url)
+    console.log("Media:", memory.media[0].url);
+  } else {
+    console.log("Media not loaded yet:", memory);
+  }
+}, [memory]);
+
 
   return (
     <motion.div
@@ -38,12 +52,12 @@ export default function TimelineCard({ memory, index, inView }) {
       >
         <div onClick={()=>{cardHandle(memory)}} className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-lg border border-green-100 hover:shadow-xl transition-all duration-300">
           <div className="flex items-start gap-4">
-            {memory.image_url && (
+            {memory && (
               <div className="w-20 h-20 rounded-xl overflow-hidden shadow-md flex-shrink-0">
                 <img
-                  src={memory.image_url}
+                  src={imgLink}
                   alt={memory.text}
-                  className="w-full h-full object-cover"
+                  className="w-full h-full object-contain"
                 />
               </div>
             )}

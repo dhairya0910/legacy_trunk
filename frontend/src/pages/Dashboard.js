@@ -150,13 +150,11 @@ export default function Dashboard() {
   const handleUploadSuccess = (newMemory) => {
     const memoryToAdd = {
       ...newMemory,
-      id: Date.now(),
-      created_date: new Date().toISOString(),
-      upload_date: new Date().toISOString(),
-      family_member: newMemory.family_member || "You",
+      createdAt: new Date(),
+   
     };
     setMemories((prev) => [memoryToAdd, ...prev]);
-    console.log("🖼️ New memory added:", memoryToAdd.title);
+    console.log("🖼️ New memory added:", memoryToAdd);
   };
 
   // 🔹 Animate cards on scroll (Intersection Observer)

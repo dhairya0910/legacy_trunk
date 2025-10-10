@@ -576,6 +576,17 @@ app.get("/logout", (req, res) => {
 const multer = require("multer");
 const fs = require("fs");
 const PDFDocument = require("pdfkit"); 
+const cloudinary = require("cloudinary").v2;
+const { CloudinaryStorage } = require("multer-storage-cloudinary");
+
+
+
+cloudinary.config({
+  cloud_name: "daoen1kny",
+  api_key: "668582844597566",
+  api_secret: "odhIeRDiAmJ_2ICtr3xM1pOPrI4"
+});
+
 
 // Create uploads directories if they don't exis
 const uploadsDir = path.join(__dirname, "public", "uploads");
@@ -583,37 +594,29 @@ const storiesDir = path.join(__dirname, "public", "stories");
 if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
 if (!fs.existsSync(storiesDir)) fs.mkdirSync(storiesDir, { recursive: true });
 
-// Multer configuration for posts
-const postStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadsDir),
-  filename: (req, file, cb) =>
-    cb(
-      null,
-      `media-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(
-        file.originalname
-      )}`
-    ),
+// Cloudinary storage for posts
+const postStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => ({
+    folder: "uploads",
+    resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
+    public_id: `media-${Date.now()}-${Math.round(Math.random() * 1e9)}`
+  }),
 });
-const uploadPost = multer({
-  storage: postStorage,
-  limits: { fileSize: 50 * 1024 * 1024 },
-});
+const uploadPost = multer({ storage: postStorage, limits: { fileSize: 50 * 1024 * 1024 } });
 
-// Multer configuration for stories
-const storyStorage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, storiesDir),
-  filename: (req, file, cb) =>
-    cb(
-      null,
-      `story-${Date.now()}-${Math.round(Math.random() * 1e9)}${path.extname(
-        file.originalname
-      )}`
-    ),
+
+// Cloudinary storage for stories
+const storyStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => ({
+    folder: "stories",
+    resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
+    public_id: `story-${Date.now()}-${Math.round(Math.random() * 1e9)}`
+  }),
 });
-const uploadStory = multer({
-  storage: storyStorage,
-  limits: { fileSize: 30 * 1024 * 1024 },
-});
+const uploadStory = multer({ storage: storyStorage, limits: { fileSize: 30 * 1024 * 1024 } });
+
 
 // MongoDB connection
 mongoose
@@ -638,7 +641,7 @@ const commentSchema = new mongoose.Schema({
 const itemSchema = new mongoose.Schema({
   user_id:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   family_id:  { type: mongoose.Schema.Types.ObjectId, ref: "Family" },
-  name: String,
+  member_name: String,
   text: String,
   description: String,
   media: [
@@ -671,6 +674,7 @@ const Story = mongoose.model("Story", storySchema);
 
 // Add post
 app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
+  console.log(1212)
   const userId = req.user._id;
   const user = await User.findById(userId);
   const familyId = user.family_id;
@@ -680,7 +684,7 @@ app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res
   try {
     const {text,description,tags} = req.body || "";
     const mediaFiles = req.files.map((file) => ({
-      url: `/uploads/${file.filename}`,
+      url: `${file.path}`,
       type: file.mimetype.startsWith("video/") ? "video" : "image",
     }));
 
@@ -784,6 +788,7 @@ app.post("/delete-comment/:itemId/:commentId", async (req, res) => {
 app.post("/upload-story",isLoggedIn, uploadStory.single("storyFile"), async (req, res) => {
    
   try {
+    console.log(req.body,req,files)
     // if (!req.file) return res.redirect("/");
     
     await Story.create({ media: `/stories/${req.body.newStory.storyFile.url}`,mediaType:req.body.newStory.storyFile.type,user_id:req.user._id });

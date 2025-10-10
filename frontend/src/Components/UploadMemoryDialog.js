@@ -65,11 +65,12 @@ export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
       });
 
       if (res.ok) {
+        const formDataObj = Object.fromEntries(formDataToSend.entries());
         console.log("Media uploaded successfully");
         alert("Memory uploaded successfully");
 
         onSuccess({
-          ...formData,
+          ...formDataObj,
           image_url: file ? URL.createObjectURL(file) : null,
           memory_type: "photo",
           tags: formData.tags.join(", ")
