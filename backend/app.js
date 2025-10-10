@@ -125,7 +125,6 @@ app.post("/", isLoggedIn, async (req, res) => {
     const user = await User.findById(req.user._id);
     const adminFamilies = await Family.find({ admin: req.user._id });
     const family = await Family.findById(user.family_id);
-
     res.json({
       name:user.name,
       username: user.username,
@@ -137,6 +136,34 @@ app.post("/", isLoggedIn, async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");
+  }
+});
+
+
+app.post("/modify-profile", isLoggedIn, async (req, res) => {
+  try {
+    const { username, name } = req.body;
+    const userId = req.user._id;
+    if (!userId) return res.json({ route: "/family-select" });
+
+    // Check if username is already taken
+    const existingUser = await User.findOne({ username });
+    if (existingUser && existingUser._id.toString() !== userId.toString()) {
+      return res.json({
+        error: "Username already taken, please choose another.",
+      });
+    }
+    // Update user profile information
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { username, name },
+      { new: true }
+    );
+    if (!updatedUser) return res.json({ route: "/signup" });
+    res.json({ route: "/dashboard" });
+  } catch (err) {
+    console.error(err);
+    res.json({ msg: "Error in connecting, we will get back to you." });
   }
 });
 
