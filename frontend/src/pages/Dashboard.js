@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [yourId, setYourId] = useState("");
   const [familyName, setFamilyName] = useState("");
   const [initialMsg, setInitialMsg] = useState([]);
+  const [isAdmin,setIsAdmin] = useState('')
 
   const observerRefs = useRef([]);
 
@@ -59,6 +60,7 @@ export default function Dashboard() {
         if (res.ok) {
           setFamilyName(data.family_name);
           setYourId(data._id);
+          setIsAdmin(data.isAdmin)
          
           console.log("User verified successfully");
         }

@@ -42,7 +42,7 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
       form.append("description", formData.description);
       if (formData.file) form.append("files", formData.file);
 
-      const res = await fetch(`${config.BACKEND_URL}/add-modified-media`, {
+      const res = await fetch(`${config.BACKEND_URL}/add-modified-media/${post._id}`, {
         method: "POST",
         body: form,
         credentials: "include",

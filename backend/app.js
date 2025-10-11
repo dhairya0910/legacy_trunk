@@ -232,12 +232,13 @@ app.post("/join-family/invite", isLoggedIn, async (req, res) => {
     const { email } = req.body;
     const user = await User.findById(req.user._id);
     const familyId = user.family_id;
-    console.log(email);
+    
     const family = await Family.findById(familyId);
 
     if (!family) return res.status(404).send("Family not found");
-    if (family.admin.toString() !== req.user._id.toString())
-      return res.status(403).send("Not authorized");
+    //this is for only admin can send the invitation
+    // if (family.admin.toString() !== req.user._id.toString())
+    //   return res.status(403).send("Not authorized");
 
     // 1. Generate a unique token for the invitation link
     const token = crypto.randomBytes(20).toString("hex");
@@ -689,8 +690,8 @@ app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res
   }
 });
 // Add modified post
-app.post("/add-modified-media",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
-  
+app.post("/add-modified-media/:postId",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
+  const {postId} = req.params;
   const userId = req.user._id;
   const user = await User.findById(userId);
   const familyId = user.family_id;
@@ -702,7 +703,7 @@ app.post("/add-modified-media",isLoggedIn, uploadPost.array("files", 10), async 
       type: file.mimetype.startsWith("video/") ? "video" : "image",
     }));
    const modifiedItem = await Item.findOneAndUpdate(
-  { user_id: userId, family_id: familyId }, // condition to match
+  { user_id: userId, family_id: familyId,_id:postId }, // condition to match
   {
     text,
     media: mediaFiles,

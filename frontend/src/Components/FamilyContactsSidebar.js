@@ -11,6 +11,7 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
   const navigate = useNavigate();
   const fetchMembersStatus = async()=>{
     for(let member of members){
+      
       if(member.id == 1) return //This I will check later why id is showing 1 in starting and causes error in mongodb
     
      try {
@@ -112,7 +113,7 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
 
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-800 truncate group-hover:text-emerald-600 transition-colors">
-                    {member.name}
+                    {member.name} 
                   </h3>
                  
                 </div>

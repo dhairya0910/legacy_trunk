@@ -1,274 +1,263 @@
-import React, { useState, useEffect } from "react";
-import { Upload, Loader2, X, FileText } from "lucide-react";
-import config from "../config"; // ✅ backend base URL
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { X, Upload, Calendar, Tag } from "lucide-react";
+import config from "../config";
 
-export default function PostDialog({ open, onOpenChange, post, onSave }) {
+const availableTags = [
+  "Birthday",
+  "Festival",
+  "Vacation",
+  "Achievement",
+  "Family Gathering",
+  "Anniversary",
+  "Graduation",
+  "Wedding"
+];
+
+export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
+  const [file, setFile] = useState(null);
+  const [isUploading, setIsUploading] = useState(false);
+
   const [formData, setFormData] = useState({
     text: "",
     description: "",
-    file: "",
-    timestamp: new Date().toISOString().slice(0, 16),
+    upload_date: new Date().toISOString().split("T")[0],
+    tags: []
   });
-  const [uploading, setUploading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [fileName, setFileName] = useState("");
 
-  // ✅ Prefill form when editing
-  useEffect(() => {
-    if (post) {
-      setFormData({
-        text: post.text || "",
-        description: post.description || "",
-        file: post.file || "",
-        timestamp: post.timestamp
-          ? new Date(post.timestamp).toISOString().slice(0, 16)
-          : new Date().toISOString().slice(0, 16),
-      });
-      if (post.file) setFileName(post.file.split("/").pop());
-    } else {
-      setFormData({
-        text: "",
-        description: "",
-        file: "",
-        timestamp: new Date().toISOString().slice(0, 16),
-      });
-      setFileName("");
-    }
-  }, [post, open]);
+  const handleTagToggle = (tag) => {
+    setFormData((prev) => ({
+      ...prev,
+      tags: prev.tags.includes(tag)
+        ? prev.tags.filter((t) => t !== tag)
+        : [...prev.tags, tag]
+    }));
+  };
 
-  /**
-   * ✅ Upload file to backend (/add-media)
-   */
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsUploading(true);
 
     try {
-      const fileForm = new FormData();
-      fileForm.append("files", file);
+      const formDataToSend = new FormData();
+
+      // Backend expects "item" field
+      formDataToSend.append("text", formData.text);
+
+      // Optional description (not used in backend but preserved)
+      formDataToSend.append("description", formData.description);
+
+      // Add selected tags
+      formData.tags.forEach((tag) => formDataToSend.append("tags", tag));
+
+      // Add tags_input (space separated)
+      formDataToSend.append("tags_input", formData.tags.join(" "));
+
+      // Add uploaded file
+      if (file) {
+        formDataToSend.append("files", file);
+      }
 
       const res = await fetch(`${config.BACKEND_URL}/add-media`, {
         method: "POST",
-        body: fileForm,
-        credentials: "include",
+        body: formDataToSend,
+        credentials: "include"
       });
+      const urlImage = await res.json();
 
-      const result = await res.json();
-      if (res.ok && result.media) {
-        setFormData((prev) => ({ ...prev, file: result.media }));
-        setFileName(file.name);
-      } else {
-        console.error("Upload failed:", result);
-        alert("Failed to upload file");
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      alert("Error while uploading file");
-    } finally {
-      setUploading(false);
-    }
-  };
-
-  /**
-   * ✅ Send post modifications to backend
-   */
-  const sendModifiedPost = async (modifiedData) => {
-    try {
-      const res = await fetch(`${config.BACKEND_URL}/add-modified-media`, {
-        method: "POST",
-        body: JSON.stringify({ modifiedData }),
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      const data = await res.json();
       if (res.ok) {
-        alert("Modified Successfully!!");
-        console.log("Saved successfully", data);
+        const formDataObj = Object.fromEntries(formDataToSend.entries());
+        console.log("Media uploaded successfully");
+        alert("Memory uploaded successfully");
+
+        onSuccess({
+          ...formDataObj,
+          tags: formData.tags.join(", "),
+          media:urlImage.media
+        });
+
+        handleClose();
+      } else {
+        const errData = await res.text();
+        console.error("Upload failed:", errData);
+        alert("Failed to upload memory");
       }
-    } catch (error) {
-      console.error("User verification failed:", error.message);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      alert("Something went wrong while uploading");
+    } finally {
+      setIsUploading(false);
     }
   };
 
-  /**
-   * ✅ Submit handler
-   */
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    await sendModifiedPost(formData);
-    await onSave(formData);
-    setSaving(false);
-    onOpenChange(false);
+  const handleClose = () => {
+    setFormData({
+      text: "",
+      description: "",
+      upload_date: new Date().toISOString().split("T")[0],
+      tags: []
+    });
+    setFile(null);
+    onClose();
   };
-
-  // ✅ Remove uploaded file
-  const removeFile = () => {
-    setFormData((prev) => ({ ...prev, file: "" }));
-    setFileName("");
-  };
-
-  if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-      <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 relative text-black">
-        {/* Close Button */}
-        <button
-          onClick={() => onOpenChange(false)}
-          className="absolute top-3 right-3 text-gray-600 hover:text-gray-800"
-        >
-          <X className="w-5 h-5" />
-        </button>
-
-        {/* Title */}
-        <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-          {post ? "Edit Post" : "Create New Post"}
-        </h2>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Text Field */}
-          <div>
-            <label className="text-sm font-medium text-gray-900">Text</label>
-            <input
-              type="text"
-              value={formData.text}
-              onChange={(e) =>
-                setFormData((prev) => ({ ...prev, text: e.target.value }))
-              }
-              placeholder="Enter post text"
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
-            />
-          </div>
-
-          {/* Description */}
-          <div>
-            <label className="text-sm font-medium text-gray-900">
-              Description
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  description: e.target.value,
-                }))
-              }
-              placeholder="Share your thoughts..."
-              rows={4}
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 resize-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
-            />
-          </div>
-
-          {/* Timestamp */}
-          <div>
-            <label className="text-sm font-medium text-gray-900">
-              Timestamp
-            </label>
-            <input
-              type="datetime-local"
-              value={formData.timestamp}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  timestamp: e.target.value,
-                }))
-              }
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
-            />
-          </div>
-
-          {/* ✅ File Upload */}
-          <div>
-            <label className="text-sm font-medium text-gray-900">
-              Attachment
-            </label>
-
-            {!formData.file ? (
-              <div className="relative">
-                <input
-                  type="file"
-                  onChange={handleFileUpload}
-                  disabled={uploading}
-                  className="hidden"
-                  id="file-upload"
-                />
-                <label
-                  htmlFor="file-upload"
-                  className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
-                      <span className="text-sm text-gray-700">
-                        Uploading...
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5 text-gray-500" />
-                      <span className="text-sm text-gray-700">
-                        Click to upload file
-                      </span>
-                    </>
-                  )}
-                </label>
-              </div>
-            ) : (
-              <div className="flex items-center justify-between p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-5 h-5 text-indigo-600" />
-                  <span className="text-sm text-gray-800 truncate max-w-xs">
-                    {fileName}
-                  </span>
+    <AnimatePresence>
+      {isOpen && (
+        <>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          >
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden text-black">
+              {/* Header */}
+              <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-emerald-50 to-green-50">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl font-bold text-gray-800">
+                    Upload Memory
+                  </h2>
+                  <button
+                    onClick={handleClose}
+                    className="p-2 hover:bg-white/50 rounded-full transition-colors"
+                  >
+                    <X className="w-6 h-6 text-gray-600" />
+                  </button>
                 </div>
-                <button
-                  type="button"
-                  onClick={removeFile}
-                  className="text-gray-600 hover:text-red-600"
-                >
-                  <X className="w-4 h-4" />
-                </button>
               </div>
-            )}
-          </div>
 
-          {/* Buttons */}
-          <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={() => onOpenChange(false)}
-              disabled={saving}
-              className="px-4 py-2 border border-gray-300 rounded-lg text-gray-800 hover:bg-gray-100 transition"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              className="px-4 py-2 rounded-lg text-white bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 transition"
-            >
-              {saving ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 inline animate-spin" />
-                  Saving...
-                </>
-              ) : post ? (
-                "Update Post"
-              ) : (
-                "Create Post"
-              )}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+              {/* Form */}
+              <form
+                onSubmit={handleSubmit}
+                className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]"
+                encType="multipart/form-data"
+              >
+                <div className="space-y-6">
+                  {/* text */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      text *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.text}
+                      onChange={(e) =>
+                        setFormData({ ...formData, text: e.target.value })
+                      }
+                      placeholder="Give your memory a text..."
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
+                    />
+                  </div>
+
+                  {/* Description */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2">
+                      Description
+                    </label>
+                    <textarea
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value
+                        })
+                      }
+                      placeholder="Tell the story behind this memory..."
+                      rows={4}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all resize-none"
+                    />
+                  </div>
+
+                  {/* Timeline Date */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Calendar className="w-4 h-4 text-emerald-600" />
+                      Timeline Date *
+                    </label>
+                    <input
+                      type="date"
+                      required
+                      value={formData.upload_date}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          upload_date: e.target.value
+                        })
+                      }
+                      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-transparent transition-all"
+                    />
+                  </div>
+
+                  {/* Tags */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <Tag className="w-4 h-4 text-emerald-600" />
+                      Tags
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {availableTags.map((tag) => (
+                        <button
+                          key={tag}
+                          type="button"
+                          onClick={() => handleTagToggle(tag)}
+                          className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                            formData.tags.includes(tag)
+                              ? "bg-gradient-to-r from-emerald-500 to-green-600 text-white shadow-md"
+                              : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                          }`}
+                        >
+                          {tag}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Photo Upload */}
+                  <div>
+                    <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
+                      <Upload className="w-4 h-4 text-emerald-600" />
+                      Upload Photo*
+                    </label>
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 hover:border-emerald-400 transition-all">
+                      <input
+                      required
+                        type="file"
+                        onChange={(e) => setFile(e.target.files[0])}
+                        className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100 cursor-pointer"
+                      />
+                      {file && (
+                        <p className="mt-2 text-sm text-emerald-600">
+                          Selected: {file.name}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Submit Button */}
+                <div className="mt-8 flex gap-3">
+                  <button
+                    type="button"
+                    onClick={handleClose}
+                    className="flex-1 px-6 py-3 border border-gray-300 rounded-xl text-gray-700 font-semibold hover:bg-gray-50 transition-all"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUploading}
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-emerald-500 to-green-600 text-white font-semibold rounded-xl hover:shadow-lg transition-all disabled:opacity-50"
+                  >
+                    {isUploading ? "Uploading..." : "Upload Memory"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
   );
 }
