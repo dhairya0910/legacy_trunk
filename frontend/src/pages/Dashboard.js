@@ -42,6 +42,7 @@ export default function Dashboard() {
   const [yourId, setYourId] = useState("");
   const [familyName, setFamilyName] = useState("");
   const [initialMsg, setInitialMsg] = useState([]);
+  const [isAdmin,setIsAdmin] = useState('')
 
   const observerRefs = useRef([]);
 
@@ -59,6 +60,7 @@ export default function Dashboard() {
         if (res.ok) {
           setFamilyName(data.family_name);
           setYourId(data._id);
+          setIsAdmin(data.isAdmin)
          
           console.log("User verified successfully");
         }
@@ -214,7 +216,7 @@ export default function Dashboard() {
                 animate={{ opacity: 1, y: 0 }}
                 className="text-center mb-12"
               >
-                <h1 className="text-[3rem] font-extrabold leading-[2.2] mb-[1.1rem] bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-500 bg-clip-text text-transparent">
+                <h1 className="text-[3rem] font-extrabold leading-[2.2]  bg-gradient-to-tr from-purple-600 via-pink-500 to-amber-500 bg-clip-text text-transparent">
                   Family Timeline
                 </h1>
                 <p className="text-gray-600 text-lg">Cherished moments, preserved forever</p>

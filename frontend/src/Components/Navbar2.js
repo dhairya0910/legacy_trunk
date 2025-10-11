@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { User, LogOut, UserCircle } from "lucide-react";
+import { User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import {useNavigate } from "react-router-dom";
 export default function Navbar2() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigator = useNavigate();
@@ -126,14 +127,15 @@ export default function Navbar2() {
                   </div>
 
                   <div className="py-2">
+                    
                     <button
                       onClick={() => setIsDropdownOpen(false)}
                       className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"
                     >
                       <User className="w-4 h-4 text-gray-600" />
-                      <span className="text-gray-700 block">View Profile</span><br />
-                 
+                      <span className="text-gray-700 block"><Link to="/view/your-profile">your profile</Link></span><br />
                     </button>
+                    {/* </Link> */}
                     <button
                         onClick={viewStories}
                       className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center gap-3 transition-colors duration-200"

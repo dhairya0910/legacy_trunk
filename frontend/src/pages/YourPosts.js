@@ -3,8 +3,10 @@ import { ArrowLeft, Plus, Sparkles } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import PostDialog from "../Components/YourPost/PostDialog";
 import Dashboard from "../Components/YourPost/Dashboard";
+import { useNavigate } from "react-router-dom";
 
 export default function YourPosts() {
+  const Navigate = useNavigate()
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -84,7 +86,7 @@ export default function YourPosts() {
               </p>
             </div>
             <button
-              onClick={openCreateDialog}
+              onClick={()=>Navigate("/dashboard")}
               className="flex items-center bg-gradient-to-r from-indigo-600 to-purple-600 text-white px-4 py-2 rounded-lg hover:from-indigo-700 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all"
             >
               <ArrowLeft className="w-5 h-5 mr-2" />

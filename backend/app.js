@@ -24,9 +24,6 @@ const io = new Server(server, {
 });
 
 
-// Set view engine to EJS and views directory
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
@@ -125,7 +122,6 @@ app.post("/", isLoggedIn, async (req, res) => {
     const user = await User.findById(req.user._id);
     const adminFamilies = await Family.find({ admin: req.user._id });
     const family = await Family.findById(user.family_id);
-
     res.json({
       name:user.name,
       username: user.username,
@@ -140,8 +136,35 @@ app.post("/", isLoggedIn, async (req, res) => {
   }
 });
 
-// Signup page rendering route
-app.get("/signup", (req, res) => res.render("signup"));
+
+app.post("/modify-profile", isLoggedIn, async (req, res) => {
+  try {
+    const { username, name } = req.body;
+    const userId = req.user._id;
+    if (!userId) return res.json({ route: "/family-select" });
+
+    // Check if username is already taken
+    const existingUser = await User.findOne({ username });
+    if (existingUser && existingUser._id.toString() !== userId.toString()) {
+      return res.json({
+        error: "Username already taken, please choose another.",
+      });
+    }
+    // Update user profile information
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { username, name },
+      { new: true }
+    );
+    if (!updatedUser) return res.json({ route: "/signup" });
+    res.json({ route: "/dashboard" });
+  } catch (err) {
+    console.error(err);
+    res.json({ msg: "Error in connecting, we will get back to you." });
+  }
+});
+
+
 
 // Profile completion route
 app.post("/complete-profile", isLoggedIn, async (req, res) => {
@@ -173,33 +196,8 @@ app.post("/complete-profile", isLoggedIn, async (req, res) => {
   }
 });
 
-// Join existing family page route
-app.get("/join-family", isLoggedIn, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    const families = await Family.find({}).populate("admin");
-    res.render("joinFamily.ejs", {
-      username: user.username,
-      families,
-      currentUserId: req.user._id,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
 
-// Create a new family route
-app.get("/create-family", isLoggedIn, async (req, res) => {
-  const userId = req.user._id;
-  const existingFamily = await Family.findOne({ admin: userId });
-  if (existingFamily)
-    return res.status(400).send("You are already an admin of another family.");
 
-  const user = await User.findById(userId);
-  const family_id = generateFamilyId();
-  res.render("createFamily.ejs", { username: user.username, family_id });
-});
 
 // Handle new family creation
 app.post("/create-family", isLoggedIn, async (req, res) => {
@@ -234,12 +232,13 @@ app.post("/join-family/invite", isLoggedIn, async (req, res) => {
     const { email } = req.body;
     const user = await User.findById(req.user._id);
     const familyId = user.family_id;
-    console.log(email);
+    
     const family = await Family.findById(familyId);
 
     if (!family) return res.status(404).send("Family not found");
-    if (family.admin.toString() !== req.user._id.toString())
-      return res.status(403).send("Not authorized");
+    //this is for only admin can send the invitation
+    // if (family.admin.toString() !== req.user._id.toString())
+    //   return res.status(403).send("Not authorized");
 
     // 1. Generate a unique token for the invitation link
     const token = crypto.randomBytes(20).toString("hex");
@@ -557,39 +556,19 @@ app.post("/messages",isLoggedIn, async (req, res) => {
 });
 
 
-// Logout route to destroy session and clear cookies
-app.post("/logout", (req, res) => {
-  console.log("logout")
-  res.clearCookie("authToken",{
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-  res.clearCookie("connect.sid")
-  res.json({"msg":"logout done!!"})
-});
-
-
-
-
-
-
-
-
-
+//Aviral's Backend
 const multer = require("multer");
 const fs = require("fs");
 const PDFDocument = require("pdfkit"); 
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
-
+require("dotenv").config();
 
 
 cloudinary.config({
-  cloud_name: "daoen1kny",
-  api_key: "668582844597566",
-  api_secret: "odhIeRDiAmJ_2ICtr3xM1pOPrI4"
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 
@@ -676,8 +655,6 @@ const Story = mongoose.model("Story", storySchema);
 
 
 
-
-
 // Add post
 app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
   console.log(1212)
@@ -706,6 +683,35 @@ app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res
     });
 
     await newItem.save();
+    res.json({ message: "Media added successfully",media:mediaFiles });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" }); 
+  }
+});
+// Add modified post
+app.post("/add-modified-media/:postId",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
+  const {postId} = req.params;
+  const userId = req.user._id;
+  const user = await User.findById(userId);
+  const familyId = user.family_id;
+ 
+  try {
+    const {text,description} = req.body || "";
+    const mediaFiles = req.files.map((file) => ({
+      url: `${file.path}`,
+      type: file.mimetype.startsWith("video/") ? "video" : "image",
+    }));
+   const modifiedItem = await Item.findOneAndUpdate(
+  { user_id: userId, family_id: familyId,_id:postId }, // condition to match
+  {
+    text,
+    media: mediaFiles,
+    description
+  },
+);
+
+    await modifiedItem.save();
     res.json({ message: "Media added successfully",media:mediaFiles });
   } catch (err) {
     console.error(err);
@@ -789,8 +795,6 @@ app.post("/delete-comment/:itemId/:commentId", async (req, res) => {
   }
 });
 
-
-
 // Add story
 app.post("/add-story",isLoggedIn, uploadStory.single("storyFile"), async (req, res) => {
   const userId = req.user._id;
@@ -805,13 +809,6 @@ app.post("/add-story",isLoggedIn, uploadStory.single("storyFile"), async (req, r
 });
 
 
-// get-stories
-app.get("/get-stories/:userId", async (req, res) => {
- 
-  const { userId } = req.params;
-  const stories = await Story.find({ user_id:userId });
-  res.json({ stories });
-});
 
 
 //fetch-stories
@@ -833,9 +830,7 @@ app.post('/:who/fetch-stories',isLoggedIn,async(req,res)=>{
 
 })
 
-
-
-
+//check auth for frontend
 app.post("/check-auth", isLoggedIn, (req, res) => {
   const authenticated = Boolean(req.user?._id)
   console.log(authenticated)
@@ -843,6 +838,31 @@ app.post("/check-auth", isLoggedIn, (req, res) => {
 });
 
 
+// Delete post
+app.post("/delete/post/:id",isLoggedIn, async (req, res) => {
+  // const {id} = req.params
+  console.log(req.params.id)
+  try {
+    await Item.findByIdAndDelete(req.params.id);
+    res.json({"msg":"Delete Success"});
+  } catch {
+    res.json({"msg":"Delete failed"});
+  }
+});
+
+
+// Logout route to destroy session and clear cookies
+app.post("/logout", (req, res) => {
+  console.log("logout")
+  res.clearCookie("authToken",{
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  res.clearCookie("connect.sid")
+  res.json({"msg":"logout done!!"})
+});
 
 
 
