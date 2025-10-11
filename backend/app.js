@@ -851,6 +851,123 @@ app.post("/delete/post/:id",isLoggedIn, async (req, res) => {
 });
 
 
+
+// Download PDF (unchanged — will skip Cloudinary images if needed)
+
+
+app.post("/download-pdf", async (req, res) => {
+  const { userId } = req.body;
+
+  try {
+    //  Fetch user's posts sorted by most recent
+    const posts = await Item.find({ user_id: userId }).sort({ createdAt: -1 });
+
+    if (!posts || posts.length === 0) {
+      return res.status(404).json({ message: "No posts found for this user." });
+    }
+
+    //  Set response headers for PDF download
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      'attachment; filename="User_Posts.pdf"'
+    );
+
+    // Create new PDF
+    const doc = new PDFDocument({ autoFirstPage: false, margin: 50 });
+    doc.pipe(res);
+
+    //  Add title page
+    doc.addPage();
+    doc.fontSize(22).font("Helvetica-Bold").text("Social Feed - User Posts", {
+      align: "center",
+    });
+    doc.moveDown(1);
+    doc.fontSize(12).font("Helvetica").text(`Generated on: ${new Date().toLocaleString()}`, {
+      align: "center",
+    });
+    doc.moveDown(2);
+
+    //  Utility to check for page overflow
+    const ensureSpace = (height = 0) => {
+      const bottom = doc.page.height - doc.page.margins.bottom;
+      if (doc.y + height > bottom) doc.addPage();
+    };
+
+    //  Loop through each post
+    for (const [index, post] of posts.entries()) {
+      if (index !== 0) doc.addPage();
+
+      doc.fontSize(16).font("Helvetica-Bold").fillColor("black");
+      doc.text(`Post ${index + 1}`, { continued: true });
+      doc.fontSize(10).fillColor("gray").text(`  •  ${new Date(post.createdAt).toLocaleString()}`);
+      doc.moveDown(0.8);
+
+      //  Description / Text
+      if (post.text) {
+        ensureSpace(40);
+        doc.fontSize(12).font("Helvetica").fillColor("black").text(post.text, {
+          align: "left",
+        });
+        doc.moveDown(1);
+      }
+
+      //  Media (images/videos)
+      if (post.media && post.media.length > 0) {
+        for (const media of post.media) {
+          ensureSpace(200);
+
+          if (media.type === "image") {
+            try {
+              // Embeds image into PDF
+              doc.image(media.url, {
+                fit: [400, 250],
+                align: "center",
+                valign: "center",
+              });
+              doc.moveDown(1);
+            } catch (error) {
+              doc
+                .fontSize(10)
+                .fillColor("gray")
+                .text(`[Image could not be loaded: ${media.url}]`);
+            }
+          } else if (media.type === "video") {
+            // Adds clickable video link
+            doc
+              .fontSize(10)
+              .fillColor("blue")
+              .text("▶ Watch Video", {
+                link: media.url,
+                underline: true,
+              });
+            doc.moveDown(1);
+          }
+        }
+      }
+
+      //  Separator line between posts
+      doc
+        .moveTo(doc.page.margins.left, doc.y)
+        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
+        .strokeColor("#cccccc")
+        .stroke();
+      doc.moveDown(1);
+    }
+
+    //  End the PDF stream
+    doc.end();
+  } catch (err) {
+    console.error("Error generating PDF:", err);
+    res.status(500).json({ message: "Failed to generate PDF" });
+  }
+});
+
+
+
+
+
+
 // Logout route to destroy session and clear cookies
 app.post("/logout", (req, res) => {
   console.log("logout")
