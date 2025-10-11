@@ -174,7 +174,7 @@ export default function Dashboard() {
       </Helmet>
 
       <div className="bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 min-h-screen">
-        <Navbar2 />
+        <Navbar2 yourId = {yourId} />
 
         <div className="flex">
           {/* Sidebar toggle (mobile view) */}

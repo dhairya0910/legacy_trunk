@@ -3,7 +3,7 @@ import { User, LogOut } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
 import {useNavigate } from "react-router-dom";
-export default function Navbar2() {
+export default function Navbar2({yourId}) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const navigator = useNavigate();
   const dummyUser = {
@@ -12,10 +12,6 @@ export default function Navbar2() {
     avatar_url: "https://i.pravatar.cc/150?img=3", // random avatar
   };
   const [user, setUser] = useState(dummyUser);
-
-
-
-
 
   const fetchUser = async () => {
     try {
@@ -74,6 +70,41 @@ export default function Navbar2() {
           navigator('/')
         }
   };
+const handlePdf = async () => {
+  try {
+    const response = await fetch("http://localhost:3128/download-pdf", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      // ✅ Only send the primitive value, not the full object
+      body: JSON.stringify({ userId:yourId }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to generate PDF");
+    }
+
+    // ✅ Convert response into a downloadable blob
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+
+    // ✅ Create an invisible link and trigger download
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "Memories.pdf";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    // ✅ Clean up the object URL
+    window.URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Error while downloading PDF:", err);
+  }
+};
+
+
 
   return (
     <nav className="sticky top-0 z-50 backdrop-blur-md bg-gradient-to-r from-emerald-50/90 via-green-50/90 to-teal-50/90 border-b border-emerald-100/50 shadow-sm">
@@ -91,7 +122,7 @@ export default function Navbar2() {
               Ghraondha
             </h1>
           </motion.div>
-
+          <div className="btn text-black"><button onClick={handlePdf}>Get pdf</button></div>
           <div className="relative">
             <motion.button
               whileHover={{ scale: 1.05 }}
