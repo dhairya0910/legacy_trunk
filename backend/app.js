@@ -584,39 +584,24 @@ app.post("/messages",isLoggedIn, async (req, res) => {
 });
 
 
-// Logout route to destroy session and clear cookies
-app.post("/logout", (req, res) => {
-  console.log("logout")
-  res.clearCookie("authToken",{
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-  res.clearCookie("connect.sid")
-  res.json({"msg":"logout done!!"})
-});
 
 
-
-
-
-
-
-
-
+//Aviral's Backend
 const multer = require("multer");
 const fs = require("fs");
 const PDFDocument = require("pdfkit"); 
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
+require("dotenv").config();
+
+
 
 
 
 cloudinary.config({
-  cloud_name: "daoen1kny",
-  api_key: "668582844597566",
-  api_secret: "odhIeRDiAmJ_2ICtr3xM1pOPrI4"
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
 
@@ -703,8 +688,6 @@ const Story = mongoose.model("Story", storySchema);
 
 
 
-
-
 // Add post
 app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
   console.log(1212)
@@ -745,16 +728,13 @@ app.post("/add-modified-media",isLoggedIn, uploadPost.array("files", 10), async 
   const userId = req.user._id;
   const user = await User.findById(userId);
   const familyId = user.family_id;
-  console.log(req.body)
-
+ 
   try {
     const {text,description} = req.body || "";
     const mediaFiles = req.files.map((file) => ({
       url: `${file.path}`,
       type: file.mimetype.startsWith("video/") ? "video" : "image",
     }));
-
-
    const modifiedItem = await Item.findOneAndUpdate(
   { user_id: userId, family_id: familyId }, // condition to match
   {
@@ -763,7 +743,6 @@ app.post("/add-modified-media",isLoggedIn, uploadPost.array("files", 10), async 
     description
   },
 );
-
 
     await modifiedItem.save();
     res.json({ message: "Media added successfully",media:mediaFiles });
@@ -849,8 +828,6 @@ app.post("/delete-comment/:itemId/:commentId", async (req, res) => {
   }
 });
 
-
-
 // Add story
 app.post("/add-story",isLoggedIn, uploadStory.single("storyFile"), async (req, res) => {
   const userId = req.user._id;
@@ -879,7 +856,6 @@ app.get("/get-stories/:userId", async (req, res) => {
   }
 });
 
-
 //fetch-stories
 app.post('/:who/fetch-stories',isLoggedIn,async(req,res)=>{
   let Id = req.user._id
@@ -899,16 +875,12 @@ app.post('/:who/fetch-stories',isLoggedIn,async(req,res)=>{
 
 })
 
-
-
 //check auth for frontend
 app.post("/check-auth", isLoggedIn, (req, res) => {
   const authenticated = Boolean(req.user?._id)
   console.log(authenticated)
   res.json({ authenticated, user: req.user?._id });
 });
-
-
 
 
 // Delete post
@@ -921,6 +893,20 @@ app.post("/delete/post/:id",isLoggedIn, async (req, res) => {
   } catch {
     res.json({"msg":"Delete failed"});
   }
+});
+
+
+// Logout route to destroy session and clear cookies
+app.post("/logout", (req, res) => {
+  console.log("logout")
+  res.clearCookie("authToken",{
+      httpOnly: true,
+      secure: false,
+      sameSite: "lax",
+      maxAge: 24 * 60 * 60 * 1000,
+    });
+  res.clearCookie("connect.sid")
+  res.json({"msg":"logout done!!"})
 });
 
 
