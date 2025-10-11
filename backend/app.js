@@ -24,9 +24,6 @@ const io = new Server(server, {
 });
 
 
-// Set view engine to EJS and views directory
-app.set("view engine", "ejs");
-app.set("views", path.join(__dirname, "views"));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
@@ -167,8 +164,7 @@ app.post("/modify-profile", isLoggedIn, async (req, res) => {
   }
 });
 
-// Signup page rendering route
-app.get("/signup", (req, res) => res.render("signup"));
+
 
 // Profile completion route
 app.post("/complete-profile", isLoggedIn, async (req, res) => {
@@ -200,33 +196,8 @@ app.post("/complete-profile", isLoggedIn, async (req, res) => {
   }
 });
 
-// Join existing family page route
-app.get("/join-family", isLoggedIn, async (req, res) => {
-  try {
-    const user = await User.findById(req.user._id);
-    const families = await Family.find({}).populate("admin");
-    res.render("joinFamily.ejs", {
-      username: user.username,
-      families,
-      currentUserId: req.user._id,
-    });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send("Server error");
-  }
-});
 
-// Create a new family route
-app.get("/create-family", isLoggedIn, async (req, res) => {
-  const userId = req.user._id;
-  const existingFamily = await Family.findOne({ admin: userId });
-  if (existingFamily)
-    return res.status(400).send("You are already an admin of another family.");
 
-  const user = await User.findById(userId);
-  const family_id = generateFamilyId();
-  res.render("createFamily.ejs", { username: user.username, family_id });
-});
 
 // Handle new family creation
 app.post("/create-family", isLoggedIn, async (req, res) => {
@@ -584,8 +555,6 @@ app.post("/messages",isLoggedIn, async (req, res) => {
 });
 
 
-
-
 //Aviral's Backend
 const multer = require("multer");
 const fs = require("fs");
@@ -593,9 +562,6 @@ const PDFDocument = require("pdfkit");
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
-
-
-
 
 
 cloudinary.config({
@@ -842,19 +808,7 @@ app.post("/add-story",isLoggedIn, uploadStory.single("storyFile"), async (req, r
 });
 
 
-// get-stories
-app.get("/get-stories/:userId", async (req, res) => {
- 
-  const { userId } = req.params;
-  try{
 
-    const stories = await Story.find({ user_id:userId });
-    res.json({ stories });
-  }
-  catch(err){
-    console.log(err)
-  }
-});
 
 //fetch-stories
 app.post('/:who/fetch-stories',isLoggedIn,async(req,res)=>{
