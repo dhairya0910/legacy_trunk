@@ -110,13 +110,13 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
                       <Upload className="w-4 h-4 text-lime-600" />
-                      Upload Photos/Videos *
+                      Upload Media *
                     </label>
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-lime-400 transition-all bg-gradient-to-br from-lime-50/50 to-emerald-50/50">
                       <input
                         type="file"
-                        accept="image/*,video/*"
-                        multiple
+                        accept="image/*"
+                  
                         required
                         onChange={(e) => setFile(Array.from(e.target.files))}
                         className="w-full text-sm text-gray-600 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-lime-50 file:text-lime-700 hover:file:bg-lime-100 cursor-pointer"
@@ -174,8 +174,8 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                     />
                   </div>
 
-                  {/* Contact Selection */}
-                  <div>
+                  {/* Contact Selection to be done on later */}
+                  {/* <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
                       <Users className="w-4 h-4 text-lime-600" />
                       Share with Contacts
@@ -222,7 +222,7 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                         No contacts selected - story will be visible to everyone
                       </p>
                     )}
-                  </div>
+                  </div> */}
                 </div>
 
                 {/* Buttons */}

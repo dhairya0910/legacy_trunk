@@ -1,77 +1,75 @@
 import React, { useState, useEffect } from "react";
 import { Upload, Loader2, X, FileText } from "lucide-react";
-
-/**
- * Mock file upload function (simulates uploading delay)
- */
-const mockUploadFile = async (file) => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({ file_url: URL.createObjectURL(file) }); // simulate uploaded file URL
-    }, 1500);
-  });
-};
+import config from "../../config";
 
 export default function PostDialog({ open, onOpenChange, post, onSave }) {
   const [formData, setFormData] = useState({
     text: "",
     description: "",
-    file_url: "",
-    timestamp: new Date().toISOString().slice(0, 16),
+    file: "",
   });
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fileName, setFileName] = useState("");
 
+  // Prefill form data when editing a post
   useEffect(() => {
     if (post) {
       setFormData({
         text: post.text || "",
         description: post.description || "",
-        file_url: post.file_url || "",
-        timestamp: post.timestamp
-          ? new Date(post.timestamp).toISOString().slice(0, 16)
-          : new Date().toISOString().slice(0, 16),
+        file: post.file || "",
       });
-      if (post.file_url) {
-        setFileName(post.file_url.split("/").pop());
-      }
+      if (post.file) setFileName(post.file.split("/").pop());
     } else {
       setFormData({
         text: "",
         description: "",
-        file_url: "",
-        timestamp: new Date().toISOString().slice(0, 16),
+        file: "",
       });
       setFileName("");
     }
   }, [post, open]);
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploading(true);
-    try {
-      const { file_url } = await mockUploadFile(file);
-      setFormData((prev) => ({ ...prev, file_url }));
-      setFileName(file.name);
-    } catch (error) {
-      console.error("Upload failed:", error);
-    }
-    setUploading(false);
-  };
-
+  // Submit all data including file to backend
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
-    await onSave(formData);
-    setSaving(false);
-    onOpenChange(false);
+
+    try {
+      const form = new FormData();
+      form.append("text", formData.text);
+      form.append("description", formData.description);
+      if (formData.file) form.append("files", formData.file);
+
+      const res = await fetch(`${config.BACKEND_URL}/add-modified-media`, {
+        method: "POST",
+        body: form,
+        credentials: "include",
+      });
+
+      const result = await res.json();
+
+      if (res.ok) {
+        alert("Modified Successfully");
+        console.log("Saved successfully", result);
+        await onSave(result);
+      } else {
+        console.error("Modification failed:", result);
+        alert("Error saving modification");
+      }
+    } catch (error) {
+      console.error("Error submitting post:", error);
+      alert("Error while saving post");
+    } finally {
+      setSaving(false);
+      onOpenChange(false);
+    }
   };
 
+  // Remove selected file
   const removeFile = () => {
-    setFormData((prev) => ({ ...prev, file_url: "" }));
+    setFormData((prev) => ({ ...prev, file: "" }));
     setFileName("");
   };
 
@@ -79,9 +77,8 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-      {/* Main Dialog */}
       <div className="bg-white rounded-xl shadow-lg w-full max-w-lg p-6 relative text-black">
-        {/* Close Button */}
+        {/* Close button */}
         <button
           onClick={() => onOpenChange(false)}
           className="absolute top-3 right-3 text-gray-600 hover:text-gray-800"
@@ -89,23 +86,17 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
           <X className="w-5 h-5" />
         </button>
 
-        {/* text */}
+        {/* Title */}
         <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
           {post ? "Edit Post" : "Create New Post"}
         </h2>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="space-y-5">
-          {/* text */}
-          <div className="space-y-1">
-            <label
-              htmlFor="text"
-              className="text-sm font-medium text-gray-900"
-            >
-              text
-            </label>
+          {/* Text Field */}
+          <div>
+            <label className="text-sm font-medium text-gray-900">Text</label>
             <input
-              id="text"
               type="text"
               value={formData.text}
               onChange={(e) =>
@@ -113,20 +104,16 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
               }
               placeholder="Enter post text"
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-black placeholder-gray-400 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
             />
           </div>
 
-          {/* Description */}
-          <div className="space-y-1">
-            <label
-              htmlFor="description"
-              className="text-sm font-medium text-gray-900"
-            >
+          {/* Description Field */}
+          <div>
+            <label className="text-sm font-medium text-gray-900">
               Description
             </label>
             <textarea
-              id="description"
               value={formData.description}
               onChange={(e) =>
                 setFormData((prev) => ({
@@ -137,44 +124,27 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
               placeholder="Share your thoughts..."
               rows={4}
               required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-black placeholder-gray-400 resize-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
-            />
-          </div>
-
-          {/* Timestamp */}
-          <div className="space-y-1">
-            <label
-              htmlFor="timestamp"
-              className="text-sm font-medium text-gray-900"
-            >
-              Timestamp
-            </label>
-            <input
-              id="timestamp"
-              type="datetime-local"
-              value={formData.timestamp}
-              onChange={(e) =>
-                setFormData((prev) => ({
-                  ...prev,
-                  timestamp: e.target.value,
-                }))
-              }
-              required
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-black focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 resize-none focus:ring-2 focus:ring-indigo-400 focus:border-indigo-400 outline-none"
             />
           </div>
 
           {/* File Upload */}
-          <div className="space-y-2">
+          <div>
             <label className="text-sm font-medium text-gray-900">
               Attachment
             </label>
 
-            {!formData.file_url ? (
+            {!formData.file ? (
               <div className="relative">
                 <input
                   type="file"
-                  onChange={handleFileUpload}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setFormData((prev) => ({ ...prev, file }));
+                      setFileName(file.name);
+                    }
+                  }}
                   disabled={uploading}
                   className="hidden"
                   id="file-upload"
@@ -183,21 +153,10 @@ export default function PostDialog({ open, onOpenChange, post, onSave }) {
                   htmlFor="file-upload"
                   className="flex items-center justify-center gap-2 w-full p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-400 hover:bg-indigo-50/30 transition-all cursor-pointer"
                 >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin text-indigo-600" />
-                      <span className="text-sm text-gray-700">
-                        Uploading...
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-5 h-5 text-gray-500" />
-                      <span className="text-sm text-gray-700">
-                        Click to upload file
-                      </span>
-                    </>
-                  )}
+                  <Upload className="w-5 h-5 text-gray-500" />
+                  <span className="text-sm text-gray-700">
+                    Click to upload file
+                  </span>
                 </label>
               </div>
             ) : (

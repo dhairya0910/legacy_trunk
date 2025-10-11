@@ -739,6 +739,39 @@ app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res
     res.status(500).json({ message: "Server error" }); 
   }
 });
+// Add modified post
+app.post("/add-modified-media",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
+  
+  const userId = req.user._id;
+  const user = await User.findById(userId);
+  const familyId = user.family_id;
+  console.log(req.body)
+
+  try {
+    const {text,description} = req.body || "";
+    const mediaFiles = req.files.map((file) => ({
+      url: `${file.path}`,
+      type: file.mimetype.startsWith("video/") ? "video" : "image",
+    }));
+
+
+   const modifiedItem = await Item.findOneAndUpdate(
+  { user_id: userId, family_id: familyId }, // condition to match
+  {
+    text,
+    media: mediaFiles,
+    description
+  },
+);
+
+
+    await modifiedItem.save();
+    res.json({ message: "Media added successfully",media:mediaFiles });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" }); 
+  }
+});
 
 //fetch-all-posts
 app.post("/family/fetch-all-posts",isLoggedIn, async (req, res) => {

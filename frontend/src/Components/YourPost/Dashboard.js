@@ -95,7 +95,7 @@ export default function Dashboard({ post, index, onEdit }) {
                 href={post.media[0].url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition-all"
+                className="mt-4 relative inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-lg hover:bg-indigo-100 transition-all"
               >
                 <FileText className="w-4 h-4 text-indigo-600" />
                 <span className="text-sm font-medium text-indigo-700">
