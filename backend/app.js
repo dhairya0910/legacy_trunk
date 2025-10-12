@@ -63,7 +63,7 @@ app.get(
 );
 
 // Google authentication callback and user processing
-app.get(process.env.GOOGLE_CALLBACK, googleAuth, async (req, res) => {
+app.get("/auth/google/callback", googleAuth, async (req, res) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId);
