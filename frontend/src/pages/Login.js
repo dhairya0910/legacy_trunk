@@ -48,7 +48,7 @@ export default function Signup() {
           </div>
 
           <p className="new">
-            Existing user?{" "}
+            New user?{" "}
             <Link to="/signup" style={{ color: "#78dbff" }}>
               Click here
             </Link>

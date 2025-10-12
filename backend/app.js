@@ -56,12 +56,6 @@ function isLoggedIn(req, res, next) {
   }
 }
 
-// Helper function to generate unique Family ID
-function generateFamilyId() {
-  const randomNumber = Math.floor(10000 + Math.random() * 90000);
-  return `#${randomNumber}`;
-}
-
 // Google authentication route
 app.get(
   "/auth/google",
@@ -69,7 +63,7 @@ app.get(
 );
 
 // Google authentication callback and user processing
-app.get("/auth/google/callback", googleAuth, async (req, res) => {
+app.get(process.env.GOOGLE_CALLBACK, googleAuth, async (req, res) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId);
