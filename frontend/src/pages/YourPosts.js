@@ -3,6 +3,7 @@ import { ArrowLeft, Plus, Sparkles } from "lucide-react";
 import { AnimatePresence } from "framer-motion";
 import PostDialog from "../Components/YourPost/PostDialog";
 import Dashboard from "../Components/YourPost/Dashboard";
+import config from "../config";
 import { useNavigate } from "react-router-dom";
 
 export default function YourPosts() {
@@ -19,14 +20,14 @@ export default function YourPosts() {
 
    const fetchAllPosts = async () => {
       try {
-        const res = await fetch("http://localhost:3128/family/fetch-user-posts", {
+        const res = await fetch(`${config.BACKEND_URL}/family/fetch-user-posts`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
         });
 
         const data = await res.json();
-        console.log("Family posts loaded:", data.items);
+        //console.log("Family posts loaded:", data.items);
         if (res.ok) {
           setPosts(data.items);
           setLoading(false);

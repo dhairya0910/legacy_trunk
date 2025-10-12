@@ -55,11 +55,11 @@ export default function Requests() {
         credentials: "include",}
       );
       const data = await res.json();
-      console.log(`${action} response:`, data);
+      //console.log(`${action} response:`, data);
+      alert(data.message);
+      setRequests((prev) => prev.filter((r) => r._id !== requestId));
 
       if (res.ok) {
-        alert(data.message);
-        setRequests((prev) => prev.filter((r) => r._id !== requestId));
       } else {
         alert(data.message || "Action failed");
       }

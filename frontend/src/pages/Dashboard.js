@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Upload, BookOpen, Menu } from "lucide-react";
 import { Helmet } from "react-helmet";
+import config from "../config";
 
 // Components
 import Navbar2 from "../Components/Navbar2";
@@ -50,7 +51,7 @@ export default function Dashboard() {
   useEffect(() => {
     const verifyUser = async () => {
       try {
-        const res = await fetch("http://localhost:3128/", {
+        const res = await fetch(`${config.BACKEND_URL}/`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -62,7 +63,7 @@ export default function Dashboard() {
           setYourId(data._id);
           setIsAdmin(data.isAdmin)
          
-          console.log("User verified successfully");
+          //console.log("User verified successfully");
         }
       } catch (error) {
         console.error("User verification failed:", error.message);
@@ -71,7 +72,7 @@ export default function Dashboard() {
 
     const fetchMembers = async () => {
       try {
-        const res = await fetch("http://localhost:3128/family/members", {
+        const res = await fetch(`${config.BACKEND_URL}/family/members`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -80,7 +81,7 @@ export default function Dashboard() {
         const data = await res.json();
         if (res.ok && data.members) {
           setMembers(data.members);
-          console.log("Family members loaded:", data.members.length);
+          //console.log("Family members loaded:", data.members.length);
         }
       } catch (error) {
         console.error("Error fetching members:", error.message);
@@ -89,14 +90,14 @@ export default function Dashboard() {
     
     const fetchAllPosts = async () => {
       try {
-        const res = await fetch("http://localhost:3128/family/fetch-all-posts", {
+        const res = await fetch(`${config.BACKEND_URL}/family/fetch-all-posts`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
         });
 
         const data = await res.json();
-        console.log("Family posts loaded:", data.items);
+        //console.log("Family posts loaded:", data.items);
         if (res.ok) {
           setMemories(data.items);
         }
@@ -114,7 +115,7 @@ export default function Dashboard() {
   // 🔹 Fetch previous chat messages between logged-in user and selected member
   const fetchMsg = async (receiver) => {
     try {
-      const res = await fetch("http://localhost:3128/messages", {
+      const res = await fetch(`${config.BACKEND_URL}/messages`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -124,7 +125,7 @@ export default function Dashboard() {
       const data = await res.json();
       if (res.ok && data.messages) {
         setInitialMsg(data.messages);
-        console.log(`Loaded ${data.messages.length} messages`);
+        //console.log(`Loaded ${data.messages.length} messages`);
       }
     } catch (error) {
       console.error("Failed to fetch messages:", error.message);
@@ -147,7 +148,7 @@ export default function Dashboard() {
    
     };
     setMemories((prev) => [memoryToAdd, ...prev]);
-    console.log("🖼️ New memory added:", memoryToAdd);
+    //console.log(" New memory added:", memoryToAdd);
   };
 
   // 🔹 Animate cards on scroll (Intersection Observer)

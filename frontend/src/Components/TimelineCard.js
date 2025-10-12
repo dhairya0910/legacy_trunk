@@ -31,7 +31,6 @@ export default function TimelineCard({ memory, index, inView }) {
   const isEven = index % 2 === 0;
 
   useEffect(() => {
-    console.log(memory);
     if (memory?.media?.length > 0) {
       setImgLink(memory.media[0].url);
     }

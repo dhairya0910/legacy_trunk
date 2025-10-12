@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const User= require('./userModel')
 const familySchema = new mongoose.Schema({
   admin:{ type: mongoose.Schema.Types.ObjectId, ref: "User"},
-  family_id: { type: String,  unique:true},
+  family_key: { type: String,  unique:true},
   family_name:{type:String},
   members: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
    joinRequests: [

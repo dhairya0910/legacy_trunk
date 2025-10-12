@@ -17,9 +17,9 @@ async function sendMail(to, subject, html) {
       subject,
       html,
     });
-    console.log("✅ Email sent to:", to);
+    //console.log(" Email sent to:", to);
   } catch (error) {
-    console.error("❌ Error sending email:", error.message);
+    //console.error(" Error sending email:", error.message);
   }
 }
 

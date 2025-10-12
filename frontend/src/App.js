@@ -10,7 +10,6 @@ import ProtectedRoute from "./Components/ProtectedRoute";
 import FamilySelection from "./Components/FamilySelection";
 import YourPosts from "./pages/YourPosts";
 import Profile from "./pages/Profile";
-import Socket from "./api/Socket";
 import InviteMember from "./pages/InviteMember";
 import Requests from "./pages/Requests";
 import CardExpand from "./Components/CardExpand";
@@ -60,14 +59,6 @@ function App() {
             element={
               <ProtectedRoute>
                 <YourPosts />
-              </ProtectedRoute>
-            }
-          />
-          <Route
-            path="/socket"
-            element={
-              <ProtectedRoute>
-                <Socket />
               </ProtectedRoute>
             }
           />

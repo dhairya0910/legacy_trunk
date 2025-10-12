@@ -1,6 +1,7 @@
 // ProtectedRoute.jsx
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import config from "../config";
 
 export default function ProtectedRoute({ children }) {
   const [loading, setLoading] = useState(true);
@@ -10,7 +11,7 @@ export default function ProtectedRoute({ children }) {
   useEffect(() => {
     async function checkAuth() {
       try {
-        const res = await fetch("http://localhost:3128/check-auth", {
+        const res = await fetch(`${config.BACKEND_URL}/check-auth`, {
           method: "POST",
           credentials: "include", 
         });
@@ -18,7 +19,7 @@ export default function ProtectedRoute({ children }) {
         if (res.ok) {
           const data = await res.json();
           if (data.authenticated) {
-            console.log("auththt")
+            //console.log("auththt")
             setIsAuth(true);
           } else {
             navigate("/login");

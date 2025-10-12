@@ -18,7 +18,7 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
           const res = await fetch(`${config.BACKEND_URL}/get-stories/${member.id}`);
           const data = await res.json();
           pushStory.push({stories:data.stories||[]})
-          console.log(storiesData)
+          //console.log(storiesData)
         
         } catch (err) {
           console.error("Error fetching for:", member._id, err);

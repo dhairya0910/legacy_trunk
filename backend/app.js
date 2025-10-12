@@ -23,15 +23,12 @@ const io = new Server(server, {
   },
 });
 
-
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(cookieParser());
 
 // Enable CORS for frontend interaction
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
-
-
 
 // Connect to MongoDB
 mongoose.connect("mongodb://127.0.0.1:27017/legacy_trunk");
@@ -55,7 +52,6 @@ function isLoggedIn(req, res, next) {
     req.user = { _id: userId };
     next();
   } catch (err) {
-    console.error("Auth middleware error:", err.message);
     return res.redirect("/signup");
   }
 }
@@ -111,7 +107,6 @@ app.get("/auth/google/callback", googleAuth, async (req, res) => {
       return res.redirect("http://localhost:3000/family-select");
     return res.redirect("http://localhost:3000/dashboard");
   } catch (err) {
-    console.error(err);
     res.status(500).send("Server error");
   }
 });
@@ -123,19 +118,19 @@ app.post("/", isLoggedIn, async (req, res) => {
     const adminFamilies = await Family.find({ admin: req.user._id });
     const family = await Family.findById(user.family_id);
     res.json({
-      name:user.name,
+      name: user.name,
       username: user.username,
       isAdmin: adminFamilies.length > 0,
       adminFamilies,
       family_name: family ? family.family_name : "",
-      _id: user._id
+      _id: user._id,
+      family_id:user.family_id
+      
     });
   } catch (err) {
-    console.error(err);
     res.status(500).send("Server error");
   }
 });
-
 
 app.post("/modify-profile", isLoggedIn, async (req, res) => {
   try {
@@ -159,12 +154,9 @@ app.post("/modify-profile", isLoggedIn, async (req, res) => {
     if (!updatedUser) return res.json({ route: "/signup" });
     res.json({ route: "/dashboard" });
   } catch (err) {
-    console.error(err);
     res.json({ msg: "Error in connecting, we will get back to you." });
   }
 });
-
-
 
 // Profile completion route
 app.post("/complete-profile", isLoggedIn, async (req, res) => {
@@ -191,13 +183,9 @@ app.post("/complete-profile", isLoggedIn, async (req, res) => {
     if (!updatedUser) return res.json({ route: "/signup" });
     res.json({ route: "/family-select" });
   } catch (err) {
-    console.error(err);
     res.json({ msg: "Error in connecting, we will get back to you." });
   }
 });
-
-
-
 
 // Handle new family creation
 app.post("/create-family", isLoggedIn, async (req, res) => {
@@ -207,7 +195,8 @@ app.post("/create-family", isLoggedIn, async (req, res) => {
 
     // Prevent duplicate family IDs
     const existingFamily = await Family.findOne({ family_id });
-    if (existingFamily) return res.status(400).send("Family ID already taken.");
+    if (existingFamily)
+      return res.status(400).send("Family ID already taken.");
 
     // Save new family and assign to user
     const family = new Family({
@@ -222,7 +211,6 @@ app.post("/create-family", isLoggedIn, async (req, res) => {
 
     res.json({ route: "/dashboard" });
   } catch (err) {
-    console.error(err);
     res.status(500).send("Error creating family.");
   }
 });
@@ -232,7 +220,7 @@ app.post("/join-family/invite", isLoggedIn, async (req, res) => {
     const { email } = req.body;
     const user = await User.findById(req.user._id);
     const familyId = user.family_id;
-    
+
     const family = await Family.findById(familyId);
 
     if (!family) return res.status(404).send("Family not found");
@@ -257,10 +245,8 @@ app.post("/join-family/invite", isLoggedIn, async (req, res) => {
        <p>Click <a href="${inviteLink}">here</a> to sign in and join automatically!</p>`
     );
 
-    console.log("Invitation sent successfully!");
     res.json({ msg: "succesfully" });
   } catch (err) {
-    console.error(err);
     res.status(500).send("Server error");
   }
 });
@@ -271,23 +257,18 @@ app.post("/join-family/send-request", isLoggedIn, async (req, res) => {
   try {
     // Extract logged-in user ID
     const userId = req.user._id;
-    console.log("User ID:", userId);
 
     // Extract family details from request
     const { family_id, family_username } = req.body;
-    console.log("Family Request Body:", req.body);
 
     // Find admin user by email
     const admin = await User.findOne({ email: family_username });
-    console.log("Admin Found:", admin ? admin.email : "Not Found");
 
     // Fetch logged-in user data
     const user = await User.findById(userId);
     if (!user) {
-      console.log("User not found in database");
       return res.status(404).json({ message: "User not found" });
     }
-    console.log("User Data:", user.username);
 
     // Find target family using family ID or admin reference
     const family = await Family.findOne({
@@ -298,15 +279,11 @@ app.post("/join-family/send-request", isLoggedIn, async (req, res) => {
     }).populate("admin");
 
     if (!family) {
-      console.log("Family not found");
       return res.status(404).json({ message: "Family not found" });
     }
-    console.log("Family Found:", family.family_name);
 
     // Prevent duplicate membership
-    console.log("Current Family Members:", family.members);
     if (family.members.some((m) => m.toString() === userId.toString())) {
-      console.log("User already a member of this family");
       return res.status(400).json({ message: "You are already a member" });
     }
 
@@ -315,7 +292,6 @@ app.post("/join-family/send-request", isLoggedIn, async (req, res) => {
       (r) => r.userId.toString() === userId.toString() && r.status === "pending"
     );
     if (existingRequest) {
-      console.log("Pending join request already exists");
       return res
         .status(400)
         .json({ message: "You already have a pending request" });
@@ -324,7 +300,6 @@ app.post("/join-family/send-request", isLoggedIn, async (req, res) => {
     // Add new join request
     family.joinRequests.push({ userId, status: "pending" });
     await family.save();
-    console.log("Join request added successfully");
 
     // Send email to admin notifying new request
     try {
@@ -335,18 +310,15 @@ app.post("/join-family/send-request", isLoggedIn, async (req, res) => {
           <p>Hi ${family.admin.username},</p>
           <p><b>${user.username}</b> has requested to join your family <b>${family.family_name}</b>.</p>
           <p>Visit your dashboard to review the request.</p>
-        `
+         `
       );
-      console.log("Email sent successfully to admin");
     } catch (emailErr) {
-      console.log("Email sending failed:", emailErr.message);
+      // Fail silently if email fails but request was saved
     }
 
     // Successful response
-    console.log("Join request process completed successfully");
     return res.status(200).json({ message: "Join request sent successfully" });
   } catch (err) {
-    console.log("Server error during join request:", err.message);
     return res.status(500).json({ message: "Server error" });
   }
 });
@@ -382,7 +354,6 @@ app.post("/join-family/requests", isLoggedIn, async (req, res) => {
 
     res.json({ family, pendingRequests });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ msg: "Server error" });
   }
 });
@@ -394,7 +365,6 @@ app.post(
   async (req, res) => {
     try {
       const { familyId, requestId } = req.params;
-      console.log("Approve Params:", req.params);
 
       // 1. Find the family
       const family = await Family.findById(familyId);
@@ -436,7 +406,6 @@ app.post(
 
       res.redirect(`/join-family/${family._id}/requests`);
     } catch (err) {
-      console.error(err);
       res.status(500).send("Server error");
     }
   }
@@ -449,7 +418,6 @@ app.post(
   async (req, res) => {
     try {
       const { familyId, requestId } = req.params;
-      console.log("Reject Params:", req.params);
 
       // 1. Find the family
       const family = await Family.findById(familyId);
@@ -489,12 +457,10 @@ app.post(
       // 7. Redirect or send success response
       res.redirect(`/join-family/${family._id}/requests`);
     } catch (err) {
-      console.error("Reject request error:", err);
       res.status(500).json({ message: "Server error" });
     }
   }
 );
-
 
 //fetching the family members
 app.post("/family/members", isLoggedIn, async (req, res) => {
@@ -517,60 +483,56 @@ app.post("/family/members", isLoggedIn, async (req, res) => {
   }
 });
 
-
 const Message = require("./models/MessageModel");
 
 io.on("connection", (socket) => {
-  console.log("User connected:", socket.id);
-
   socket.on("join", (userId) => {
     socket.join(userId); // join room by userId
   });
 
-    socket.on("send_message", async ({ sender, receiver, text,time }) => {
+  socket.on("send_message", async ({ sender, receiver, text, time }) => {
     // Save to MongoDB
-    console.log(sender, receiver, text,time)
-    const message = await Message.create({ sender, receiver, text, createdAt:time });
+    const message = await Message.create({
+      sender,
+      receiver,
+      text,
+      createdAt: time,
+    });
     // Emit to receiver
     io.to(receiver).emit("receive_message", message);
     // Emit to sender as well (optional)
     io.to(sender).emit("receive_message", message);
-    })
+  });
 
-    socket.on("disconnect", () => {
-        console.log("User disconnected:", socket.id);
-      });
-})
-
-// Get messages between two users
-app.post("/messages",isLoggedIn, async (req, res) => {
-  const {sender,receiver} = req.body;
- const messages = await Message.find({
-  $or: [
-    { sender, receiver },
-    { sender: receiver, receiver: sender }
-  ]
-}).sort({ createdAt: 1 });
-
-  res.json({messages});
+  socket.on("disconnect", () => {});
 });
 
+// Get messages between two users
+app.post("/messages", isLoggedIn, async (req, res) => {
+  const { sender, receiver } = req.body;
+  const messages = await Message.find({
+    $or: [
+      { sender, receiver },
+      { sender: receiver, receiver: sender },
+    ],
+  }).sort({ createdAt: 1 });
+
+  res.json({ messages });
+});
 
 //Aviral's Backend
 const multer = require("multer");
 const fs = require("fs");
-const PDFDocument = require("pdfkit"); 
+const PDFDocument = require("pdfkit");
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 require("dotenv").config();
-
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
-
 
 // Create uploads directories if they don't exis
 const uploadsDir = path.join(__dirname, "public", "uploads");
@@ -584,11 +546,13 @@ const postStorage = new CloudinaryStorage({
   params: async (req, file) => ({
     folder: "uploads",
     resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
-    public_id: `media-${Date.now()}-${Math.round(Math.random() * 1e9)}`
+    public_id: `media-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
   }),
 });
-const uploadPost = multer({ storage: postStorage, limits: { fileSize: 50 * 1024 * 1024 } });
-
+const uploadPost = multer({
+  storage: postStorage,
+  limits: { fileSize: 50 * 1024 * 1024 },
+});
 
 // Cloudinary storage for stories
 const storyStorage = new CloudinaryStorage({
@@ -596,17 +560,19 @@ const storyStorage = new CloudinaryStorage({
   params: async (req, file) => ({
     folder: "stories",
     resource_type: file.mimetype.startsWith("video/") ? "video" : "image",
-    public_id: `story-${Date.now()}-${Math.round(Math.random() * 1e9)}`
+    public_id: `story-${Date.now()}-${Math.round(Math.random() * 1e9)}`,
   }),
 });
-const uploadStory = multer({ storage: storyStorage, limits: { fileSize: 30 * 1024 * 1024 } });
-
+const uploadStory = multer({
+  storage: storyStorage,
+  limits: { fileSize: 30 * 1024 * 1024 },
+});
 
 // MongoDB connection
 mongoose
   .connect("mongodb://127.0.0.1:27017/legacy_trunk")
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error(err));
+  .then(() => {})
+  .catch((err) => {});
 
 // Middleware
 app.set("view engine", "ejs");
@@ -618,13 +584,13 @@ app.use(express.static(path.join(__dirname, "public")));
 // Schemas
 const commentSchema = new mongoose.Schema({
   text: { type: String, required: true },
-  name:{ type: String, required: true },
+  name: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
 });
 
 const itemSchema = new mongoose.Schema({
-  user_id:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-  family_id:  { type: mongoose.Schema.Types.ObjectId, ref: "Family" },
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  family_id: { type: mongoose.Schema.Types.ObjectId, ref: "Family" },
   member_name: String,
   text: String,
   description: String,
@@ -642,8 +608,8 @@ const itemSchema = new mongoose.Schema({
 });
 
 const storySchema = new mongoose.Schema({
-  title:String,
-  user_id:  { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  title: String,
+  user_id: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
   media: { type: String, required: true },
   mediaType: { type: String, required: true },
   createdAt: { type: Date, default: Date.now, expires: 86400 },
@@ -653,336 +619,337 @@ const storySchema = new mongoose.Schema({
 const Item = mongoose.model("Item", itemSchema);
 const Story = mongoose.model("Story", storySchema);
 
-
-
 // Add post
-app.post("/add-media",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
-  console.log(1212)
-  const userId = req.user._id;
-  const user = await User.findById(userId);
-  const familyId = user.family_id;
+app.post(
+  "/add-media",
+  isLoggedIn,
+  uploadPost.array("files", 10),
+  async (req, res) => {
+    const userId = req.user._id;
+    const user = await User.findById(userId);
+    const familyId = user.family_id;
 
-  console.log("Request Body:", req.body);
-  console.log("Uploaded Files:", req.files);
-  try {
-    const {text,description,tags} = req.body || "";
-    const mediaFiles = req.files.map((file) => ({
-      url: `${file.path}`,
-      type: file.mimetype.startsWith("video/") ? "video" : "image",
-    }));
+    try {
+      const { text, description, tags } = req.body || "";
+      const mediaFiles = req.files.map((file) => ({
+        url: `${file.path}`,
+        type: file.mimetype.startsWith("video/") ? "video" : "image",
+      }));
 
+      const newItem = await new Item({
+        member_name: user.name,
+        family_id: familyId,
+        user_id: userId,
+        text,
+        media: mediaFiles,
+        tags,
+        description,
 
-    const newItem = await new Item({
-      member_name:user.name,
-      family_id:familyId,
-      user_id:userId,
-      text,
-      media: mediaFiles,
-      tags,
-      description
-    });
+      });
+      
 
-    await newItem.save();
-    res.json({ message: "Media added successfully",media:mediaFiles });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" }); 
+      await newItem.save();
+      res.json({ message: "Media added successfully", media: mediaFiles,"_id":newItem._id });
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
   }
-});
+);
 // Add modified post
-app.post("/add-modified-media/:postId",isLoggedIn, uploadPost.array("files", 10), async (req, res) => {
-  const {postId} = req.params;
-  const userId = req.user._id;
-  const user = await User.findById(userId);
-  const familyId = user.family_id;
- 
-  try {
-    const {text,description} = req.body || "";
-    const mediaFiles = req.files.map((file) => ({
-      url: `${file.path}`,
-      type: file.mimetype.startsWith("video/") ? "video" : "image",
-    }));
-   const modifiedItem = await Item.findOneAndUpdate(
-  { user_id: userId, family_id: familyId,_id:postId }, // condition to match
-  {
-    text,
-    media: mediaFiles,
-    description
-  },
+app.post(
+  "/add-modified-media/:postId",
+  isLoggedIn,
+  uploadPost.array("files", 10),
+  async (req, res) => {
+    const { postId } = req.params;
+    const userId = req.user._id;
+
+    try {
+      const { text, description } = req.body;
+
+      // Start with the text fields that might be updated
+      const updateData = { text, description };
+
+      // **Only if new files are uploaded, prepare and add them to the update object**
+      if (req.files && req.files.length > 0) {
+        const mediaFiles = req.files.map((file) => ({
+          url: file.path,
+          type: file.mimetype.startsWith("video/") ? "video" : "image",
+        }));
+        updateData.media = mediaFiles;
+      }
+
+      // Perform the update with our conditional update object
+      const modifiedItem = await Item.findOneAndUpdate(
+        { user_id: userId, _id: postId }, // condition to match
+        { $set: updateData }, // Use $set to update only specified fields
+        { new: true } // Return the updated document
+      );
+      
+      if (!modifiedItem) {
+        return res.status(404).json({ message: "Post not found or update failed." });
+      }
+      
+      // The .save() call is not needed after findOneAndUpdate
+      res.json({ message: "Media updated successfully", item: modifiedItem });
+    } catch (err) {
+      res.status(500).json({ message: "Server error" });
+    }
+  }
 );
 
-    await modifiedItem.save();
-    res.json({ message: "Media added successfully",media:mediaFiles });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Server error" }); 
-  }
-});
-
 //fetch-all-posts
-app.post("/family/fetch-all-posts",isLoggedIn, async (req, res) => {
+app.post("/family/fetch-all-posts", isLoggedIn, async (req, res) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId);
-    const familyId = user.family_id; 
-    const items = await Item.find({ family_id: familyId }).sort({ createdAt: -1 });
-    console.log("Fetched items:", items);
+    const familyId = user.family_id;
+    const items = await Item.find({ family_id: familyId }).sort({
+      createdAt: -1,
+    });
     res.json({ items });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 //fetch-user-post
-app.post("/family/fetch-user-posts",isLoggedIn, async (req, res) => {
+app.post("/family/fetch-user-posts", isLoggedIn, async (req, res) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId);
-    const familyId = user.family_id; 
-    const items = await Item.find({ user_id:userId }).sort({ createdAt: -1 });
-    console.log("Fetched items:", items);
+    const familyId = user.family_id;
+    const items = await Item.find({ user_id: userId }).sort({ createdAt: -1 });
     res.json({ items });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 //fetch-single-post
-app.post("/family/fetch-single-post/:id",isLoggedIn, async (req, res) => {
-  console.log(202)
+app.post("/family/fetch-single-post/:id", isLoggedIn, async (req, res) => {
   try {
-    const {id} = req.params;
-   
-    const post = await Item.findById(id)
-  
+    const { id } = req.params;
+
+    const post = await Item.findById(id);
+
     res.json({ post });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Server error" });
   }
 });
 
 //add-comments
-app.post("/comment/:id",isLoggedIn, async (req, res) => {
+app.post("/comment/:id", isLoggedIn, async (req, res) => {
   try {
     const userId = req.user._id;
-    const user = await User.findOne({_id:userId});
-   
+    const user = await User.findOne({ _id: userId });
+
     const { commentText } = req.body;
 
     await Item.findByIdAndUpdate(req.params.id, {
-      
-      $push: { comments: { text: commentText,name:user.name } },
+      $push: { comments: { text: commentText, name: user.name } },
     });
   } catch {
-    res.json({"message":"falied"})
+    res.json({ message: "falied" });
   }
 });
 
 //delete comment
 app.post("/delete-comment/:itemId/:commentId", async (req, res) => {
- 
   try {
     await Item.findByIdAndUpdate(req.params.itemId, {
       $pull: { comments: { _id: req.params.commentId } },
     });
-   res.json({"msg":"successfully"})
+    res.json({ msg: "successfully" });
   } catch {
-    
-    res.json({"msg":"unsuccesfull"})
+    res.json({ msg: "unsuccesfull" });
   }
 });
 
 // Add story
-app.post("/add-story",isLoggedIn, uploadStory.single("storyFile"), async (req, res) => {
-  const userId = req.user._id;
-  try {
-    const mediaType = req.file.mimetype.startsWith("video/") ? "video" : "image";
-    await Story.create({ media: req.file.path, mediaType,user_id:userId,title:req.body.title });
-   res.json({"msg":"ok"})
-  } catch (err) {
-    console.error(err);
-   res.json({"msg":"bad"})
+app.post(
+  "/add-story",
+  isLoggedIn,
+  uploadStory.single("storyFile"),
+  async (req, res) => {
+    const userId = req.user._id;
+    try {
+      const mediaType = req.file.mimetype.startsWith("video/")
+        ? "video"
+        : "image";
+      await Story.create({
+        media: req.file.path,
+        mediaType,
+        user_id: userId,
+        title: req.body.title,
+      });
+      res.json({ msg: "ok" });
+    } catch (err) {
+      res.json({ msg: "bad" });
+    }
   }
-});
-
-
-
+);
 
 //fetch-stories
-app.post('/:who/fetch-stories',isLoggedIn,async(req,res)=>{
-  let Id = req.user._id
-  const {who} = req.params;
-  
-  if(who!=="user") Id = who;
+app.post("/:who/fetch-stories", isLoggedIn, async (req, res) => {
+  let Id = req.user._id;
+  const { who } = req.params;
+
+  if (who !== "user") Id = who;
   try {
-    const stories = await Story.find({ user_id: Id })
-        .sort({ createdAt: 1 })
-        
-        res.json({stories})
+    const stories = await Story.find({ user_id: Id }).sort({ createdAt: 1 });
 
+    res.json({ stories });
   } catch (error) {
-    res.json({error})
+    res.json({ error });
   }
-
-
-})
+});
 
 //check auth for frontend
 app.post("/check-auth", isLoggedIn, (req, res) => {
-  const authenticated = Boolean(req.user?._id)
-  console.log(authenticated)
+  const authenticated = Boolean(req.user?._id);
   res.json({ authenticated, user: req.user?._id });
 });
 
-
 // Delete post
-app.post("/delete/post/:id",isLoggedIn, async (req, res) => {
-  // const {id} = req.params
-  console.log(req.params.id)
+app.post("/delete/post/:id", isLoggedIn, async (req, res) => {
   try {
     await Item.findByIdAndDelete(req.params.id);
-    res.json({"msg":"Delete Success"});
+    res.json({ msg: "Delete Success" });
   } catch {
-    res.json({"msg":"Delete failed"});
+    res.json({ msg: "Delete failed" });
   }
 });
 
+// Ensure you have this require statement at the top of your file
+const axios = require("axios");
 
+// ... your other code
 
-// Download PDF (unchanged — will skip Cloudinary images if needed)
-
-
+// Replace your existing download-pdf route with this one
 app.post("/download-pdf", async (req, res) => {
-  const { userId } = req.body;
+    try {
+        const { familyId } = req.body;
+       
+        const posts = await Item.find({ family_id: familyId }).sort({ createdAt: -1 });
 
-  try {
-    //  Fetch user's posts sorted by most recent
-    const posts = await Item.find({ user_id: userId }).sort({ createdAt: -1 });
-
-    if (!posts || posts.length === 0) {
-      return res.status(404).json({ message: "No posts found for this user." });
-    }
-
-    //  Set response headers for PDF download
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader(
-      "Content-Disposition",
-      'attachment; filename="User_Posts.pdf"'
-    );
-
-    // Create new PDF
-    const doc = new PDFDocument({ autoFirstPage: false, margin: 50 });
-    doc.pipe(res);
-
-    //  Add title page
-    doc.addPage();
-    doc.fontSize(22).font("Helvetica-Bold").text("Social Feed - User Posts", {
-      align: "center",
-    });
-    doc.moveDown(1);
-    doc.fontSize(12).font("Helvetica").text(`Generated on: ${new Date().toLocaleString()}`, {
-      align: "center",
-    });
-    doc.moveDown(2);
-
-    //  Utility to check for page overflow
-    const ensureSpace = (height = 0) => {
-      const bottom = doc.page.height - doc.page.margins.bottom;
-      if (doc.y + height > bottom) doc.addPage();
-    };
-
-    //  Loop through each post
-    for (const [index, post] of posts.entries()) {
-      if (index !== 0) doc.addPage();
-
-      doc.fontSize(16).font("Helvetica-Bold").fillColor("black");
-      doc.text(`Post ${index + 1}`, { continued: true });
-      doc.fontSize(10).fillColor("gray").text(`  •  ${new Date(post.createdAt).toLocaleString()}`);
-      doc.moveDown(0.8);
-
-      //  Description / Text
-      if (post.text) {
-        ensureSpace(40);
-        doc.fontSize(12).font("Helvetica").fillColor("black").text(post.text, {
-          align: "left",
-        });
-        doc.moveDown(1);
-      }
-
-      //  Media (images/videos)
-      if (post.media && post.media.length > 0) {
-        for (const media of post.media) {
-          ensureSpace(200);
-
-          if (media.type === "image") {
-            try {
-              // Embeds image into PDF
-              doc.image(media.url, {
-                fit: [400, 250],
-                align: "center",
-                valign: "center",
-              });
-              doc.moveDown(1);
-            } catch (error) {
-              doc
-                .fontSize(10)
-                .fillColor("gray")
-                .text(`[Image could not be loaded: ${media.url}]`);
-            }
-          } else if (media.type === "video") {
-            // Adds clickable video link
-            doc
-              .fontSize(10)
-              .fillColor("blue")
-              .text("▶ Watch Video", {
-                link: media.url,
-                underline: true,
-              });
-            doc.moveDown(1);
-          }
+        if (!posts || posts.length === 0) {
+            return res.status(404).json({ message: "No posts found for this user." });
         }
-      }
 
-      //  Separator line between posts
-      doc
-        .moveTo(doc.page.margins.left, doc.y)
-        .lineTo(doc.page.width - doc.page.margins.right, doc.y)
-        .strokeColor("#cccccc")
-        .stroke();
-      doc.moveDown(1);
+        res.setHeader("Content-Type", "application/pdf");
+        res.setHeader("Content-Disposition", 'attachment; filename="LegacyTrunk_Memories_Centered.pdf"');
+
+        const doc = new PDFDocument({ autoFirstPage: false, margin: 50 });
+        doc.pipe(res);
+
+        // --- Helper Function to Add a Frame to Each Page ---
+        const addPageFrame = () => {
+            doc.rect(30, 30, doc.page.width - 60, doc.page.height - 60)
+               .lineWidth(1)
+               .strokeColor("#dddddd")
+               .stroke();
+        };
+
+        // --- Auto-apply the frame whenever a new page is added ---
+        doc.on('pageAdded', addPageFrame);
+
+        // --- Title Page (Already Centered) ---
+        doc.addPage();
+        doc.fontSize(24).font("Helvetica-Bold").text("Your Family Memories", { align: "center" });
+        doc.moveDown(0.5);
+        doc.fontSize(14).font("Helvetica").text("From Your Legacy Trunk", { align: "center" });
+        doc.moveDown(2);
+        doc.fontSize(10).font("Helvetica-Oblique")
+           .text(`Generated on: ${new Date().toLocaleDateString()}`, { align: "center", y: doc.page.height - 100 });
+
+        // --- Loop Through Posts ---
+        for (const post of posts) {
+            doc.addPage();
+            
+            // --- Post Text / Description (NOW CENTERED) ---
+            if (post.text) {
+                doc.fontSize(14).font("Helvetica-Bold").fillColor("black").text(post.text, { align: "center" });
+                doc.moveDown(0.5);
+            }
+            if(post.description){
+                doc.fontSize(11).font("Helvetica").text(post.description, { align: "center" });
+                doc.moveDown(1);
+            }
+             doc.fontSize(9).font("Helvetica-Oblique").fillColor("#888888")
+               .text(`Posted on: ${new Date(post.createdAt).toLocaleString()}`, { align: 'center' });
+            doc.moveDown(1.5);
+
+            // --- Post Media (Images and Videos) ---
+            if (post.media && post.media.length > 0) {
+                for (const media of post.media) {
+                    if (media.type === "image") {
+                        try {
+                            const imageResponse = await axios.get(media.url, { responseType: 'arraybuffer' });
+                            const imageBuffer = Buffer.from(imageResponse.data, 'binary');
+                            doc.image(imageBuffer, {
+                                fit: [450, 400],
+                                align: 'center',
+                                valign: 'center'
+                            });
+                            doc.moveDown(1);
+                        } catch (error) {
+                            doc.fillColor("red").text(`[Image could not be loaded]`, { align: 'center' });
+                        }
+                    } else if (media.type === "video") {
+                        try {
+                            // Create a Cloudinary URL for the video thumbnail
+                            const thumbnailUrl = media.url
+                                .replace('/upload/', '/upload/w_450,h_250,c_fill,so_2/')
+                                .replace(/\.(mp4|mov|avi|wmv)$/, ".jpg");
+
+                            const thumbResponse = await axios.get(thumbnailUrl, { responseType: 'arraybuffer' });
+                            const thumbBuffer = Buffer.from(thumbResponse.data, 'binary');
+
+                            // Embed the thumbnail image
+                            doc.image(thumbBuffer, {
+                                fit: [450, 250],
+                                align: 'center',
+                                valign: 'center'
+                            });
+                            doc.moveDown(1);
+                            
+                            // --- Add the styled, centered "Watch Video" link ---
+                            doc.font('Helvetica-Bold').fontSize(12).fillColor('#0066cc')
+                               .text("▶ Watch Video", {
+                                   align: 'center', // This ensures the link is centered
+                                   link: media.url,
+                                   underline: true
+                               });
+                            doc.moveDown(1);
+
+                        } catch (error) {
+                            doc.fillColor("red").text(`[Video thumbnail could not be loaded]`, { align: 'center' });
+                        }
+                    }
+                    doc.moveDown(1.5); // Space after each media item
+                }
+            }
+        }
+
+        doc.end();
+    } catch (err) {
+        res.status(500).json({ message: "Failed to generate PDF" });
     }
-
-    //  End the PDF stream
-    doc.end();
-  } catch (err) {
-    console.error("Error generating PDF:", err);
-    res.status(500).json({ message: "Failed to generate PDF" });
-  }
 });
-
-
-
-
-
 
 // Logout route to destroy session and clear cookies
 app.post("/logout", (req, res) => {
-  console.log("logout")
-  res.clearCookie("authToken",{
-      httpOnly: true,
-      secure: false,
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
-  res.clearCookie("connect.sid")
-  res.json({"msg":"logout done!!"})
+  res.clearCookie("authToken", {
+    httpOnly: true,
+    secure: false,
+    sameSite: "lax",
+    maxAge: 24 * 60 * 60 * 1000,
+  });
+  res.clearCookie("connect.sid");
+  res.json({ msg: "logout done!!" });
 });
 
-
-
-
 const PORT = process.env.PORT || 3128;
-server.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
+server.listen(PORT, () => {});

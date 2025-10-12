@@ -3,9 +3,10 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Send, Phone, Video } from "lucide-react";
 import { io } from "socket.io-client";
 import { useRef } from "react";
+import config from "../config";
 
 // Initialize socket connection
-const socket = io("http://localhost:3128");
+const socket = io(`${config.BACKEND_URL}/`);
 
 export default function ChatOverlay({
   yourId,
@@ -52,7 +53,7 @@ export default function ChatOverlay({
 
     // Emit message to server
     socket.emit("send_message", newMessage);
-    console.log("Sent message:", newMessage);
+    //console.log("Sent message:", newMessage);
 
     // Update local message state
     setMessages((prev) => [...prev, newMessage]);

@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { User } from "lucide-react";
 import { useEffect,useState } from "react";
 import { useNavigate } from "react-router-dom";
+import config from "../config";
 export default function ViewProfileAfterLogin() {
   // local state for input fields
   const [name, setName] = useState("");
@@ -11,7 +12,7 @@ export default function ViewProfileAfterLogin() {
 
     const fetchInfo = async () => {
       try {
-        const res = await fetch("http://localhost:3128/", {
+        const res = await fetch(`${config.BACKEND_URL}/`, {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
@@ -21,7 +22,7 @@ export default function ViewProfileAfterLogin() {
         if (res.ok) {
             setName(data.name)
             setUsername(data.username)
-          console.log("User verified successfully");
+          //console.log("User verified successfully");
         }
       } catch (error) {
         console.error("User verification failed:", error.message);
@@ -36,7 +37,7 @@ export default function ViewProfileAfterLogin() {
   // simple handler for save (you can connect API later)
   const saveInfo = async () => {
     try {
-      const res = await fetch("http://localhost:3128/modify-profile", {
+      const res = await fetch(`${config.BACKEND_URL}/modify-profile`, {
         method: "POST",
         body:JSON.stringify({name,username}),
         credentials: "include",
@@ -46,7 +47,7 @@ export default function ViewProfileAfterLogin() {
       const data = await res.json();
       if (res.ok) {
         navigator(`${data.route}`)
-        console.log("User verified successfully");
+        //console.log("User verified successfully");
       }
     } catch (error) {
         alert("Error occured.")

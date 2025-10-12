@@ -88,7 +88,11 @@ export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
       formDataToSend.append("description", formData.description);
       formData.tags.forEach((tag) => formDataToSend.append("tags", tag));
       formDataToSend.append("tags_input", formData.tags.join(" "));
-      if (file) formDataToSend.append("files", file);
+      if (file){
+        formDataToSend.append("files", file);
+        
+       
+      }
 
       const res = await fetch(`${config.BACKEND_URL}/add-media`, {
         method: "POST",
@@ -96,7 +100,7 @@ export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
         credentials: "include",
       });
 
-      const urlImage = await res.json();
+      const data = await res.json();
 
       if (res.ok) {
         const formDataObj = Object.fromEntries(formDataToSend.entries());
@@ -104,7 +108,8 @@ export default function UploadMemoryDialog({ isOpen, onClose, onSuccess }) {
         onSuccess({
           ...formDataObj,
           tags: formData.tags.join(", "),
-          media: urlImage.media,
+          media: data.media,
+          _id:data._id,
         });
         handleClose();
       } else {

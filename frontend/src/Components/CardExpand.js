@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import config from "../config";
 
 export default function PostDetails() {
   const { id } = useParams();
@@ -11,7 +12,7 @@ export default function PostDetails() {
 
   const fetchPost = async () => {
     try {
-      const res = await fetch(`http://localhost:3128/family/fetch-single-post/${id}`, {
+      const res = await fetch(`${config.BACKEND_URL}/family/fetch-single-post/${id}`, {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -29,11 +30,11 @@ export default function PostDetails() {
     fetchPost();
   }, []);
 
-  const handleLike = () => setLiked(!liked);
+  // const handleLike = () => setLiked(!liked);
 
   const sendComment = async () => {
    try {
-     const res = await fetch(`http://localhost:3128/comment/${id}`, {
+     const res = await fetch(`${config.BACKEND_URL}/comment/${id}`, {
        method: "POST",
        credentials: "include",
        body: JSON.stringify({"commentText":newComment}),
@@ -53,7 +54,7 @@ export default function PostDetails() {
 
   const handleDelete = async (commentId) =>{
      try {
-     const res = await fetch(`http://localhost:3128/delete-comment/${id}/${commentId}`, {
+     const res = await fetch(`${config.BACKEND_URL}/delete-comment/${id}/${commentId}`, {
        method: "POST",
        credentials: "include",
        headers: { "Content-Type": "application/json" },
@@ -114,7 +115,7 @@ export default function PostDetails() {
           <ul className="space-y-2">
             {comments.map((comment, index) => (
               <li key={index} className="bg-gray-100 p-2 rounded text-black">
-                {comment.text||comment} <span className="float-right text-red-700 cursor-pointer" onClick={()=>handleDelete(comment._id)}>{comment.name?<p>delete</p>:''}</span><p className="text-[.8rem] text-gray-500 my-1">~{comment.name||"YOU"}</p>
+                {comment.text||comment} <span className="float-right text-red-700 cursor-pointer" onClick={()=>handleDelete(comment._id)}>{comment.name?<p>Delete</p>:''}</span><p className="text-[.8rem] text-gray-500 my-1">~{comment.name||"YOU"}</p>
               </li>
        
             ))}

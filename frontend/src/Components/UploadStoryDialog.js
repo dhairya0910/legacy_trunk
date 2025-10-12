@@ -41,7 +41,7 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
     );
 
     // Send request as multipart/form-data
-    const res = await fetch(`http://localhost:3128/add-story`, {
+    const res = await fetch(`${config.BACKEND_URL}/add-story`, {
       method: "POST",
       credentials: "include",
       body: formDataToSend, //  send FormData, not JSON
@@ -115,7 +115,7 @@ export default function UploadStoryDialog({ isOpen, onClose, onSuccess, familyMe
                     <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 hover:border-lime-400 transition-all bg-gradient-to-br from-lime-50/50 to-emerald-50/50">
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/* video/*"
                   
                         required
                         onChange={(e) => setFile(Array.from(e.target.files))}

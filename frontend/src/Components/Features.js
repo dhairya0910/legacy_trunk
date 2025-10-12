@@ -29,7 +29,6 @@ export default function Features() {
   }, []);
 
   const basicFeatures = [
-    { icon: '🎤', title: 'Story Recording', desc: 'Capture audio, video, photos & text' },
     { icon: '⏱️', title: 'Timeline Creation', desc: 'Organize memories chronologically' },
     { icon: '📸', title: 'Photo Tagging', desc: 'Upload and tag family photos' },
     { icon: '🔒', title: 'Private Circles', desc: 'Secure family-only access' },
