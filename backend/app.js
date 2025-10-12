@@ -17,7 +17,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000", // your frontend
+    origin: process.env.FRONTEND_URL, // your frontend
     methods: ["GET", "POST"],
     credentials: true,
   },
@@ -28,14 +28,14 @@ app.use(express.json());
 app.use(cookieParser());
 
 // Enable CORS for frontend interaction
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
 // Connect to MongoDB
-mongoose.connect("mongodb://127.0.0.1:27017/legacy_trunk");
+mongoose.connect(process.env.MONGO_URI);
 
 // Session and Passport initialization
 app.use(
-  session({ secret: "secret_key", resave: false, saveUninitialized: false })
+  session({ secret: process.env.SECRET, resave: false, saveUninitialized: false })
 );
 app.use(passport.initialize());
 app.use(passport.session());
@@ -77,7 +77,7 @@ app.get("/auth/google/callback", googleAuth, async (req, res) => {
     // Store user ID as token in cookie
     res.cookie("authToken", req.user._id, {
       httpOnly: true,
-      secure: false,
+      secure: true,
       sameSite: "lax",
       maxAge: 24 * 60 * 60 * 1000,
     });
@@ -102,10 +102,10 @@ app.get("/auth/google/callback", googleAuth, async (req, res) => {
 
     // Redirect user based on profile completion
     if (!user.username || !user.age)
-      return res.redirect("http://localhost:3000/profile");
+      return res.redirect(`${process.env.FRONTEND_URL}/profile`);
     if (!user.family_id)
-      return res.redirect("http://localhost:3000/family-select");
-    return res.redirect("http://localhost:3000/dashboard");
+      return res.redirect(`${process.env.FRONTEND_URL}/family-select`);
+    return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
   } catch (err) {
     res.status(500).send("Server error");
   }
@@ -568,11 +568,7 @@ const uploadStory = multer({
   limits: { fileSize: 30 * 1024 * 1024 },
 });
 
-// MongoDB connection
-mongoose
-  .connect("mongodb://127.0.0.1:27017/legacy_trunk")
-  .then(() => {})
-  .catch((err) => {});
+
 
 // Middleware
 app.set("view engine", "ejs");
@@ -943,7 +939,7 @@ app.post("/download-pdf", async (req, res) => {
 app.post("/logout", (req, res) => {
   res.clearCookie("authToken", {
     httpOnly: true,
-    secure: false,
+    secure: true,
     sameSite: "lax",
     maxAge: 24 * 60 * 60 * 1000,
   });
