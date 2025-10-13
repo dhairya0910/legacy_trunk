@@ -781,6 +781,16 @@ app.post(
   }
 );
 
+
+// get-stories
+app.get("/get-stories/:userId", async (req, res) => {
+ 
+  const { userId } = req.params;
+  const stories = await Story.find({ user_id:userId });
+  res.json({ stories });
+});
+
+
 //fetch-stories
 app.post("/:who/fetch-stories", isLoggedIn, async (req, res) => {
   let Id = req.user._id;
