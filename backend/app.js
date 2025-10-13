@@ -47,12 +47,12 @@ const googleAuth = passport.authenticate("google", { failureRedirect: "/" });
 function isLoggedIn(req, res, next) {
   try {
     const token = req.cookies?.authToken;
-    if (!token) return res.redirect("/signup");
+    if (!token) return res.redirect(`${process.env.FRONTEND_URL}/signup`);
     const userId = token;
     req.user = { _id: userId };
     next();
   } catch (err) {
-    return res.redirect("/signup");
+    return res.redirect(`${process.env.FRONTEND_URL}/signup`);
   }
 }
 
@@ -63,18 +63,18 @@ app.get(
 );
 
 // Google authentication callback and user processing
-app.get(process.env.GOOGLE_CALLBACK, googleAuth, async (req, res) => {
+app.get("/auth/google/callback", googleAuth, async (req, res) => {
   try {
     const userId = req.user._id;
     const user = await User.findById(userId);
 
-    // Store user ID as token in cookie
-    res.cookie("authToken", req.user._id, {
-      httpOnly: true,
-      secure: true,
-      sameSite: "lax",
-      maxAge: 24 * 60 * 60 * 1000,
-    });
+  res.cookie("authToken", req.user._id, {
+  httpOnly: true,
+  secure: true,   // only send over HTTPS
+  sameSite: "none",
+  maxAge: 24*60*60*1000
+});
+
 
     // Auto-join family if there's a pending invite for the user
     const pendingFamily = await Family.findOne({
@@ -145,7 +145,7 @@ app.post("/modify-profile", isLoggedIn, async (req, res) => {
       { username, name },
       { new: true }
     );
-    if (!updatedUser) return res.json({ route: "/signup" });
+    if (!updatedUser) return res.json({ route: `${process.env.FRONTEND_URL}/signup` });
     res.json({ route: "/dashboard" });
   } catch (err) {
     res.json({ msg: "Error in connecting, we will get back to you." });
@@ -174,7 +174,7 @@ app.post("/complete-profile", isLoggedIn, async (req, res) => {
       { username, age },
       { new: true }
     );
-    if (!updatedUser) return res.json({ route: "/signup" });
+    if (!updatedUser) return res.json({ route: `${process.env.FRONTEND_URL}/signup` });
     res.json({ route: "/family-select" });
   } catch (err) {
     res.json({ msg: "Error in connecting, we will get back to you." });
@@ -780,6 +780,16 @@ app.post(
     }
   }
 );
+
+
+// get-stories
+app.get("/get-stories/:userId", async (req, res) => {
+ 
+  const { userId } = req.params;
+  const stories = await Story.find({ user_id:userId });
+  res.json({ stories });
+});
+
 
 //fetch-stories
 app.post("/:who/fetch-stories", isLoggedIn, async (req, res) => {

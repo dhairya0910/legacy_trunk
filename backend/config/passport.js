@@ -3,7 +3,7 @@ const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const FacebookStrategy = require("passport-facebook").Strategy;
 const InstagramStrategy = require("passport-instagram").Strategy;
 const User = require("../models/userModel.js");
-
+require("dotenv").config()
 passport.serializeUser((user, done) => {
   done(null, user.id);
 });

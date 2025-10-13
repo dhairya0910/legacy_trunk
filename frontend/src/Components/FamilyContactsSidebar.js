@@ -1,43 +1,64 @@
-import React from "react";
 import { motion } from "framer-motion";
 import { Users, MessageCircle, X } from "lucide-react";
 import { useEffect } from "react";
-import config from "../config";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-export default function FamilyContactsSidebar({ familyName,members, onContactClick, isOpen, onClose }) {
-  const [storiesData,setStoriesData] = useState([])
-  const pushStory = [];
+import config from "../config";
+
+export default function FamilyContactsSidebar({
+  familyName,
+  members,
+  onContactClick,
+  isOpen,
+  onClose,
+}) {
+  const [storiesData, setStoriesData] = useState([]);
   const navigate = useNavigate();
-  const fetchMembersStatus = async()=>{
-    for(let member of members){
-      
-      if(member.id == 1) return //This I will check later why id is showing 1 in starting and causes error in mongodb
-    
-     try {
-          const res = await fetch(`${config.BACKEND_URL}/get-stories/${member.id}`);
-          const data = await res.json();
-          pushStory.push({stories:data.stories||[]})
-          //console.log(storiesData)
-        
-        } catch (err) {
-          console.error("Error fetching for:", member._id, err);
-          
-        }
-    }
-  }
 
-
-  const checkStatus = (id) =>{
-    navigate(`/${id}/view-stories`)
-  }
-
-  useEffect( () => {
-    fetchMembersStatus();
-    setStoriesData(pushStory)
-  }, [members])
   
+  useEffect(() => {
+    const fetchAllMemberStories = async () => {
+      if (!members || members.length === 0) return;
 
+      try {
+        const storyPromises = members.map((member) => {
+          if (member.id === 1) {
+            return Promise.resolve({ stories: [] });
+          }
+          // Fetch stories for the member.
+          return fetch(`${config.BACKEND_URL}/get-stories/${member.id}`)
+            .then((res) => {
+              // If the response is not OK, we return a default value.
+              if (!res.ok) {
+                console.error(`Failed to fetch stories for member ${member.id}`);
+                return { stories: [] };
+              }
+              return res.json();
+            })
+            .catch((err) => {
+                  console.error("Error fetching for member:", member.id, err);
+              return { stories: [] };
+            });
+        });
+
+      const storyResults = await Promise.all(storyPromises);
+
+        const formattedStories = storyResults.map((data) => ({
+          stories: data.stories || [],
+        }));
+
+        setStoriesData(formattedStories);
+      } catch (error) {
+        console.error("An error occurred while fetching member stories:", error);
+      }
+    };
+
+    fetchAllMemberStories();
+  }, [members]); // The effect re-runs if the `members` array changes.
+
+  const checkStatus = (id) => {
+    navigate(`/${id}/view-stories`);
+  };
 
   return (
     <>
@@ -66,7 +87,7 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
                   <p className="text-sm text-gray-500">{members.length} members</p>
                 </div>
               </div>
-              
+
               <button
                 onClick={onClose}
                 className="lg:hidden p-2 hover:bg-white/50 rounded-full transition-colors"
@@ -84,18 +105,21 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
                 whileHover={{ scale: 1.02, x: 4 }}
-                onClick={() => onContactClick(member)}
                 className="flex items-center gap-3 p-3 rounded-xl hover:bg-gradient-to-r hover:from-emerald-50 hover:to-green-50 cursor-pointer transition-all duration-200 group"
               >
                 <div className="relative">
-                  <div onClick={()=>checkStatus(member.id)} className="w-14 h-14 bg-gradient-to-tr from-[#544364] to-pink-100 shadow-[0_20px_50px_rgba(236,72,153,0.4)] rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md"style={{
-            
-            boxShadow:
-              storiesData[index]?.stories?.length > 0
-                ? "0px 0px 10px #450081 "
-                : "2px solid transparent",
-           
-          }}>
+                  {/* Avatar with dynamic box-shadow for stories */}
+                  <div
+                    onClick={() => checkStatus(member.id)}
+                    className="w-14 h-14 rounded-full bg-gradient-to-br from-teal-400 to-emerald-600 flex items-center justify-center shadow-md cursor-pointer transition-all duration-300"
+                    style={{
+                      boxShadow:
+                        storiesData[index]?.stories?.length > 0
+                          ? "0 0 12px 3px rgba(16, 185, 129, 0.7)" // A more prominent green glow
+                          : "none",
+                      border: "2px solid white",
+                    }}
+                  >
                     {member.avatar_url ? (
                       <img
                         src={member.avatar_url}
@@ -108,17 +132,23 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
                       </span>
                     )}
                   </div>
+                  {/* Online status indicator */}
                   <div className="absolute bottom-0 right-0 w-4 h-4 bg-green-400 border-2 border-white rounded-full" />
                 </div>
 
-                <div className="flex-1 min-w-0">
+                {/* Member name and message icon */}
+                <div
+                  className="flex-1 min-w-0"
+                  onClick={() => onContactClick(member)}
+                >
                   <h3 className="font-semibold text-gray-800 truncate group-hover:text-emerald-600 transition-colors">
-                    {member.name} 
+                    {member.name}
                   </h3>
-                 
                 </div>
 
-                <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                <div onClick={() => onContactClick(member)}>
+                  <MessageCircle className="w-5 h-5 text-gray-400 group-hover:text-emerald-500 transition-colors" />
+                </div>
               </motion.div>
             ))}
           </div>
@@ -127,3 +157,4 @@ export default function FamilyContactsSidebar({ familyName,members, onContactCli
     </>
   );
 }
+
